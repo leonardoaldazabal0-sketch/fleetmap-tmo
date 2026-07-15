@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>FleetMap TMO</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="brand-mark" aria-hidden="true">FM</div>
+      <div>
+        <h1>FleetMap TMO</h1>
+        <p>Matriz de radios y grupos de conversación</p>
+      </div>
+      <span id="serverStatus" class="server-status">Conectando…</span>
+    </header>
+
+    <div class="app-layout">
+      <nav class="side-nav" aria-label="Secciones">
+        <button class="nav-button active" data-section="fleet" type="button"><span>01</span>Fleet Map</button>
+        <button class="nav-button" data-section="index" type="button"><span>02</span>Índice de Codeplugs</button>
+        <button class="nav-button" data-section="quick" type="button"><span>03</span>Escaneo rápido</button>
+        <button class="nav-button" data-section="lookup" type="button"><span>04</span>Búsqueda de radio</button>
+        <button class="nav-button" data-section="diagnostic" type="button"><span>05</span>Diagnóstico</button>
+      </nav>
+
+      <main class="content">
+        <section id="fleetSection" class="app-section active" aria-labelledby="fleetTitle">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Vista principal</span>
+              <h2 id="fleetTitle">Fleet Map</h2>
+              <p>Sube el Excel maestro, revisa la matriz y descarga el reporte cuando lo necesites.</p>
+            </div>
+            <button class="button secondary" data-download-template type="button">Descargar plantilla</button>
+          </div>
+
+          <div class="base-summary" aria-label="Estado de la base">
+            <div><span>Base actualizada</span><strong id="fleetBaseUpdated">—</strong></div>
+            <div><span>Codeplugs indexados</span><strong id="fleetIndexed">—</strong></div>
+            <div><span>Ruta base</span><strong id="fleetBaseShort">002 Programacion</strong></div>
+          </div>
+
+          <section class="workflow-card" aria-label="Generar Fleet Map">
+            <div class="workflow-step">
+              <span class="step-number">1</span>
+              <div class="step-copy">
+                <strong>Subir plantilla Excel</strong>
+                <small id="masterFileLabel">Selecciona el maestro de ISSI</small>
+              </div>
+              <label class="button secondary file-button">
+                Seleccionar Excel
+                <input id="masterFileInput" type="file" accept=".xlsx">
+              </label>
+            </div>
+            <div class="workflow-divider" aria-hidden="true"></div>
+            <div class="workflow-step">
+              <span class="step-number">2</span>
+              <div class="step-copy">
+                <strong>Generar reporte</strong>
+                <small>La consulta usa el índice SQLite existente.</small>
+              </div>
+              <button id="fleetButton" class="button primary" type="button">Generar Fleet Map</button>
+            </div>
+          </section>
+
+          <div id="fleetMessage" class="inline-message" hidden></div>
+
+          <section id="fleetResults" hidden>
+            <div class="results-heading">
+              <div>
+                <span class="eyebrow">Resultado</span>
+                <h3>Matriz comparativa</h3>
+              </div>
+              <div class="context-actions">
+                <button id="regenerateButton" class="button secondary" type="button">Generar nuevamente</button>
+                <button id="downloadExcelButton" class="button download" type="button">Descargar Excel</button>
+              </div>
+            </div>
+
+            <div class="result-metrics">
+              <div><span>Radios encontradas</span><strong id="resultRadios">0</strong></div>
+              <div><span>Grupos únicos</span><strong id="resultGroups">0</strong></div>
+              <div><span>ISSI sin codeplug</span><strong id="resultMissing" class="warning-text">0</strong></div>
+              <div><span>Errores relacionados</span><strong id="resultErrors" class="error-text">0</strong></div>
+              <div><span>Generado</span><strong id="resultGenerated">—</strong></div>
+            </div>
+
+            <div class="matrix-toolbar">
+              <label class="search-field">
+                <span class="sr-only">Buscar en la matriz</span>
+                <input id="matrixSearch" type="search" placeholder="Buscar razón social, unidad, radio, alias o GSSI">
+              </label>
+              <select id="matrixStatusFilter" aria-label="Filtrar radios">
+                <option value="all">Todos</option>
+                <option value="with-codeplug">Con codeplug</option>
+                <option value="without-codeplug">Sin codeplug</option>
+                <option value="with-errors">Con errores</option>
+              </select>
+              <span id="matrixRenderNote" class="render-note"></span>
+            </div>
+
+            <div id="matrixContainer" class="matrix-wrap" aria-label="Matriz Fleet Map">
+              <div class="empty-state">Genera un Fleet Map para ver la matriz.</div>
+            </div>
+
+            <section id="missingSection" class="compact-section" hidden>
+              <div class="subsection-heading">
+                <h3>ISSI sin codeplug</h3>
+                <span id="missingCountBadge" class="badge warning">0</span>
+              </div>
+              <div class="compact-table-wrap">
+                <table class="compact-table">
+                  <thead><tr><th>ISSI</th><th>Razón social</th><th>Unidad</th><th>Observación</th></tr></thead>
+                  <tbody id="missingBody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <details class="technical-details">
+              <summary>Ver detalle técnico por grupo</summary>
+              <div class="technical-toolbar">
+                <span id="technicalCount">0 filas</span>
+              </div>
+              <div class="technical-table-wrap">
+                <table class="technical-table">
+                  <thead><tr><th>Archivo</th><th>Razón social</th><th>Unidad</th><th>Serial</th><th>ISSI</th><th>Alias</th><th>GSSI</th><th>CP</th><th>SW</th></tr></thead>
+                  <tbody id="technicalBody"></tbody>
+                </table>
+              </div>
+            </details>
+          </section>
+        </section>
+
+        <section id="indexSection" class="app-section" aria-labelledby="indexTitle" hidden>
+          <div class="section-heading">
+            <div><span class="eyebrow">Administración</span><h2 id="indexTitle">Índice de Codeplugs</h2><p>Estado del índice central utilizado por Fleet Map.</p></div>
+          </div>
+          <div class="panel">
+            <div class="info-row"><span>Ruta fija</span><strong id="indexRootPath">—</strong></div>
+            <div class="index-metrics">
+              <div><span>Último escaneo</span><strong id="indexLastScan">—</strong></div>
+              <div><span>Archivos indexados</span><strong id="indexFiles">—</strong></div>
+              <div><span>Grupos guardados</span><strong id="indexGroups">—</strong></div>
+            </div>
+            <div class="admin-action">
+              <div><strong>Actualizar índice central</strong><p>Se ejecuta en segundo plano. Fleet Map seguirá disponible durante el recorrido.</p></div>
+              <button id="updateIndexButton" class="button warning-button" type="button">Actualizar índice</button>
+            </div>
+            <div id="indexMessage" class="inline-message" hidden></div>
+          </div>
+        </section>
+
+        <section id="quickSection" class="app-section" aria-labelledby="quickTitle" hidden>
+          <div class="section-heading">
+            <div><span class="eyebrow">Herramienta técnica</span><h2 id="quickTitle">Escaneo rápido</h2><p>Analiza una carpeta puntual o un archivo CPE sin recorrer la ruta central.</p></div>
+          </div>
+          <div class="panel quick-controls">
+            <input id="quickPathInput" type="text" spellcheck="false" placeholder="Pega una carpeta o archivo .cpe">
+            <button id="quickScanButton" class="button primary" type="button">Escanear</button>
+            <button id="quickCsvButton" class="button secondary" type="button" disabled>Exportar CSV</button>
+          </div>
+          <div id="quickMessage" class="inline-message" hidden></div>
+          <div class="quick-metrics">
+            <div><span>Archivos</span><strong id="quickFiles">0</strong></div>
+            <div><span>Grupos</span><strong id="quickGroups">0</strong></div>
+            <div><span>Analizados</span><strong id="quickAnalyzed">0</strong></div>
+            <div><span>Cacheados</span><strong id="quickCached">0</strong></div>
+          </div>
+          <div class="technical-table-wrap standalone">
+            <table class="technical-table">
+              <thead><tr><th>Archivo</th><th>Serial</th><th>TEI</th><th>ISSI</th><th>Alias</th><th>GSSI</th><th>Estado</th><th>CP</th><th>SW</th></tr></thead>
+              <tbody id="quickBody"><tr><td colspan="9" class="empty-cell">Sin datos</td></tr></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="lookupSection" class="app-section" aria-labelledby="lookupTitle" hidden>
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow">Consulta directa</span>
+              <h2 id="lookupTitle">Búsqueda de radio</h2>
+              <p>Busca una radio por ISSI, TEI o serial sin subir plantilla y revisa de inmediato sus grupos programados.</p>
+            </div>
+          </div>
+
+          <div class="panel lookup-panel">
+            <div class="lookup-controls">
+              <input id="radioSearchInput" type="search" spellcheck="false" placeholder="Escribe ISSI, TEI o serial">
+              <button id="radioSearchButton" class="button primary" type="button">Buscar radio</button>
+            </div>
+            <div class="lookup-hint">La búsqueda usa el índice SQLite ya cargado en la VM.</div>
+            <div id="radioSearchMessage" class="inline-message" hidden></div>
+          </div>
+
+          <div class="lookup-summary" aria-label="Resumen de búsqueda">
+            <div><span>Coincidencias</span><strong id="radioSearchCount">0</strong></div>
+            <div><span>Grupos encontrados</span><strong id="radioSearchGroups">0</strong></div>
+            <div><span>Radios con error</span><strong id="radioSearchErrors" class="error-text">0</strong></div>
+            <div><span>Última búsqueda</span><strong id="radioSearchTerm">—</strong></div>
+          </div>
+
+          <div id="radioSearchResults" class="radio-results">
+            <div class="empty-state">Escribe un ISSI, TEI o serial para ver los grupos de esa radio.</div>
+          </div>
+        </section>
+
+        <section id="diagnosticSection" class="app-section" aria-labelledby="diagnosticTitle" hidden>
+          <div class="section-heading">
+            <div><span class="eyebrow">Información técnica</span><h2 id="diagnosticTitle">Diagnóstico</h2><p>Datos de soporte, pendientes y ubicación de archivos locales.</p></div>
+            <button id="refreshDiagnosticsButton" class="button secondary" type="button">Actualizar datos</button>
+          </div>
+          <div class="panel diagnostic-paths">
+            <div class="info-row"><span>Ruta central</span><strong id="diagnosticRoot">—</strong></div>
+            <div class="info-row"><span>Base SQLite</span><strong id="diagnosticDatabase">—</strong></div>
+            <div class="info-row"><span>Último resultado</span><strong id="diagnosticScanStats">—</strong></div>
+          </div>
+          <div class="diagnostic-grid">
+            <section class="panel list-panel"><h3>Errores por tipo</h3><div id="errorTypeList" class="stat-list"></div></section>
+          </div>
+          <section class="panel list-panel"><h3>Reportes técnicos disponibles</h3><div id="reportList" class="report-list"></div></section>
+        </section>
+      </main>
+    </div>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "cpe-dashboard",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Dashboard servidor para indexar codeplugs CPE y grupos TMO",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test",
+    "status": "node scripts/db-status.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.11.1"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true
+  }
+}
