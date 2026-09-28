@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "bases": "datos/bases",
+  "programaciones": "datos/programaciones",
+  "temporales": "datos/temporales",
+  "catalogos": "configuracion/catalogos",
+  "cargadorConfig": "configuracion/cargador-tmo",
+  "reglas": "configuracion/reglas-validacion",
+  "registros": "registros",
+  "reportes": "reportes",
+  "entregas": "datos/entregas",
+  "publicacion": "configuracion/publicacion",
+  "documentacion": "documentacion",
+  "respaldos": "../CPE-TMO-Respaldos/historicos"
+}

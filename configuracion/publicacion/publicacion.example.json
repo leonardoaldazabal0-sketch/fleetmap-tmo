@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "nas": {
+    "enabled": true,
+    "root": "\\\\SERVIDOR\\recurso\\PROYECTOS CPE APROBADOS"
+  },
+  "googleDrive": {
+    "enabled": true,
+    "folderId": "ID_DE_LA_CARPETA_COMPARTIDA",
+    "serviceAccountFile": "service-account.json"
+  },
+  "field": {
+    "centralUrl": "http://IP_DE_LA_VM:8787",
+    "syncIntervalSeconds": 60
+  }
+}

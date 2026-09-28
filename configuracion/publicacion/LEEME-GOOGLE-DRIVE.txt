@@ -1,0 +1,11 @@
+CONFIGURACION DE GOOGLE DRIVE API
+
+1. TI debe crear un proyecto en Google Cloud y habilitar Google Drive API.
+2. TI debe crear una cuenta de servicio y descargar su clave JSON.
+3. Guardar la clave con este nombre:
+   F:\CPE-TMO\configuracion\publicacion\service-account.json
+4. Compartir la carpeta de Google Drive configurada en publicacion.json con el
+   correo client_email que aparece en la clave, otorgandole permiso de Editor.
+5. No subir service-account.json a Google Drive ni enviarlo a las laptops.
+
+El dashboard indicara "Drive pendiente de configurar" mientras falte la clave.

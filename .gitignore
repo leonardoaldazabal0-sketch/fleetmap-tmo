@@ -22,3 +22,18 @@ logs/
 .env
 config.json
 config.local.json
+
+# Operacion central (no codigo)
+/datos/
+/registros/
+/reportes/
+/distribuciones/
+/configuracion/catalogos/
+/configuracion/cargador-tmo/*.json
+!/configuracion/cargador-tmo/*.example.json
+/configuracion/publicacion/publicacion.json
+/configuracion/publicacion/service-account.json
+!/configuracion/publicacion/*.example.json
+
+# Informes operativos con datos de clientes
+/documentacion/
