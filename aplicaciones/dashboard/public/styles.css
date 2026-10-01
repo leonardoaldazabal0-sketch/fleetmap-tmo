@@ -473,6 +473,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); outlin
 .project-publication-grid > div { padding: 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface-soft); }
 .project-publication-grid span, .project-publication-grid strong { display: block; }
 .project-publication-grid span { color: var(--muted); font-size: .78rem; margin-bottom: 5px; }
+.project-route-editor { display: grid; grid-template-columns: minmax(300px, 2fr) repeat(3, minmax(120px, 1fr)); gap: 12px; margin-top: 18px; align-items: end; }
+.project-route-path { grid-column: span 4; }
+.project-route-preview { grid-column: 1 / -1; display: grid; gap: 6px; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 10px; background: var(--surface-soft); }
+.project-route-preview span { color: var(--muted); font-size: .78rem; }
+.project-route-preview code, .project-destination-card code { display: block; overflow-wrap: anywhere; white-space: normal; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .78rem; }
+.project-destination-card code { margin-top: 8px; color: var(--muted); }
 .project-history { margin-top: 18px; }
 .project-history .subsection-heading { margin-bottom: 12px; }
 .project-code-button { appearance: none; border: 0; padding: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 750; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
@@ -491,7 +497,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); outlin
   .diagnostic-grid { grid-template-columns: 1fr; }
   .health-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .health-details-grid { grid-template-columns: 1fr; }
-  .project-upload-grid, .project-model-grid, .project-radio-grid, .project-publication-grid { grid-template-columns: 1fr 1fr; }
+  .project-upload-grid, .project-model-grid, .project-radio-grid, .project-publication-grid, .project-route-editor { grid-template-columns: 1fr 1fr; }
+  .project-route-path, .project-route-preview { grid-column: 1 / -1; }
   .project-template-step { grid-template-columns: 1fr; }
   .agenda-workspace { grid-template-columns: minmax(280px, .8fr) minmax(400px, 1.2fr); }
   .project-upload-grid > .button, .project-model-grid > .button { grid-column: 1 / -1; }
@@ -517,7 +524,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); outlin
   .info-row { grid-template-columns: 1fr; gap: 3px; }
   .admin-action { display: grid; }
   .report-item { grid-template-columns: 1fr; gap: 2px; }
-  .project-upload-grid, .project-model-grid, .project-radio-grid, .project-publication-grid, .project-metrics, .project-radio-metrics, .project-model-verdict { grid-template-columns: 1fr; }
+  .project-upload-grid, .project-model-grid, .project-radio-grid, .project-publication-grid, .project-route-editor, .project-metrics, .project-radio-metrics, .project-model-verdict { grid-template-columns: 1fr; }
+  .project-route-path, .project-route-preview { grid-column: auto; }
   .project-radio-heading { align-items: flex-start; }
   .project-template-controls { justify-content: flex-start; }
   .project-model-verdict > div { border-right: 0; border-bottom: 1px solid var(--border); }

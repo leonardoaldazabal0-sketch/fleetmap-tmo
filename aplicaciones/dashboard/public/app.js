@@ -434,6 +434,7 @@ function renderProjectRuntime(payload) {
   byId("projectFieldQueueStatus").textContent = fieldMode
     ? `${formatNumber(sync?.pending || 0)} pendiente(s)`
     : "NO APLICA EN VM";
+  byId("projectRouteSaveButton").hidden = fieldMode;
 }
 
 async function loadProjectRuntime() {
@@ -442,6 +443,38 @@ async function loadProjectRuntime() {
   if (!response.ok) throw new Error(payload.error || "No se pudo consultar el modo del dashboard");
   renderProjectRuntime(payload);
   return payload;
+}
+
+function projectRouteFromInputs() {
+  return {
+    clientPath: byId("projectRouteClientPath").value.trim(),
+    formNumber: byId("projectRouteForm").value.trim().replace(/^FORM\s*/i, ""),
+    programmingDate: byId("projectRouteDate").value,
+    programmerInitials: byId("projectRouteInitials").value.trim().toUpperCase(),
+  };
+}
+
+function updateProjectRoutePreview() {
+  const route = projectRouteFromInputs();
+  const validDate = /^\d{4}-\d{2}-\d{2}$/.test(route.programmingDate);
+  const clientPath = route.clientPath.replace(/[\\/]+/g, "\\").replace(/^\\+|\\+$/g, "");
+  if (!clientPath || !route.formNumber || !validDate || !route.programmerInitials) {
+    byId("projectRoutePreview").textContent = "Completa la ruta final";
+    return "";
+  }
+  const dateKey = route.programmingDate.replaceAll("-", "");
+  const preview = `Plantillas x Clientes ${route.programmingDate.slice(0, 4)}\\${clientPath}\\FORM ${route.formNumber}\\${dateKey}_${route.programmerInitials}\\DESPUES`;
+  byId("projectRoutePreview").textContent = preview;
+  return preview;
+}
+
+function applyProjectRoute(route) {
+  if (!route) return updateProjectRoutePreview();
+  byId("projectRouteClientPath").value = route.clientPath || "";
+  byId("projectRouteForm").value = route.formNumber || "";
+  byId("projectRouteDate").value = route.programmingDate || "";
+  byId("projectRouteInitials").value = route.programmerInitials || "";
+  updateProjectRoutePreview();
 }
 
 async function loadProjectPublication(showMessages = false) {
@@ -464,14 +497,23 @@ async function loadProjectPublication(showMessages = false) {
   const payload = await response.json();
   if (!response.ok) throw new Error(payload.error || "No se pudo consultar la publicación");
   const publication = payload.publication;
+  const route = payload.project?.publicationRoute || null;
+  applyProjectRoute(route);
   const status = publication?.status || "PENDIENTE";
   const published = status === "PUBLICADO";
   const waitingAccess = status === "ESPERANDO_ACCESO" || /cuenta de servicio|acceso/i.test(publication?.errorMessage || "");
   byId("projectPublicationStatus").textContent = waitingAccess ? "PENDIENTE DE ACCESO" : status;
   byId("projectPublicationStatus").className = `status-pill ${published ? "ok" : status === "ERROR" && !waitingAccess ? "error" : "warning"}`;
   byId("projectPublicationRetryButton").hidden = !publication || published;
+  const details = publication?.details || {};
+  const driveStatus = details.drive?.status || (route ? "PENDIENTE" : "RUTA PENDIENTE");
+  const nasStatus = details.nas?.status || (route ? "PENDIENTE" : "RUTA PENDIENTE");
+  byId("projectDriveStatus").textContent = driveStatus;
+  byId("projectNasPublishStatus").textContent = nasStatus;
+  byId("projectDrivePath").textContent = details.drive?.path || (route ? `${payload.destinations?.googleDrive?.desktopRoot || "Drive"}\\${route.relativePath || ""}` : "Ruta pendiente");
+  byId("projectNasPublishPath").textContent = details.nas?.path || (route ? `${payload.destinations?.nas?.root || "TIC NAS"}\\${route.relativePath || ""}` : "Ruta pendiente");
   if (published) {
-    byId("projectPublicationText").textContent = `Entrega ${publication.details?.deliveryId || ""} publicada en Drive y NAS.`;
+    byId("projectPublicationText").textContent = `Entrega ${details.deliveryId || ""} publicada y verificada en Drive y TIC NAS.`;
   } else if (publication?.errorMessage) {
     byId("projectPublicationText").textContent = `${publication.errorMessage}. El dashboard seguirá reintentando automáticamente.`;
   } else {
@@ -479,6 +521,40 @@ async function loadProjectPublication(showMessages = false) {
   }
   if (showMessages) setMessage(byId("projectPublicationMessage"), published ? "La entrega está publicada y registrada." : "Estado de publicación actualizado.", published ? "success" : "warning");
   return payload;
+}
+
+async function saveProjectPublicationRoute() {
+  const projectCode = byId("projectRadioCodeInput").value.trim().toUpperCase();
+  if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
+    setMessage(byId("projectPublicationMessage"), "Escribe primero el código completo del Proyecto CPE en el paso 4.", "warning");
+    return;
+  }
+  const button = byId("projectRouteSaveButton");
+  button.disabled = true;
+  button.textContent = "Guardando…";
+  try {
+    const response = await fetch("/api/cpe-projects/publication-route", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ projectCode, route: projectRouteFromInputs() }),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || "No se pudo guardar la ruta de publicación");
+    applyProjectRoute(payload.route);
+    setMessage(
+      byId("projectPublicationMessage"),
+      payload.queued
+        ? "Ruta registrada. La publicación en Drive y TIC NAS quedó en cola."
+        : "Ruta registrada. La publicación comenzará cuando todas las radios estén aprobadas.",
+      "success",
+    );
+    setTimeout(() => loadProjectPublication(false).catch(() => {}), 1000);
+  } catch (error) {
+    setMessage(byId("projectPublicationMessage"), error.message, "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Guardar ruta y publicar";
+  }
 }
 
 async function prepareProjectForField() {
@@ -1370,6 +1446,10 @@ byId("projectPublicationRefreshButton").addEventListener("click", async () => {
   }
 });
 byId("projectPublicationRetryButton").addEventListener("click", retryProjectPublication);
+byId("projectRouteSaveButton").addEventListener("click", saveProjectPublicationRoute);
+for (const id of ["projectRouteClientPath", "projectRouteForm", "projectRouteDate", "projectRouteInitials"]) {
+  byId(id).addEventListener("input", updateProjectRoutePreview);
+}
 byId("projectRadioRefreshButton").addEventListener("click", async () => {
   const button = byId("projectRadioRefreshButton");
   button.disabled = true;

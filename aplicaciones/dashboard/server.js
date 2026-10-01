@@ -16,7 +16,7 @@ const { extractCpeContacts, compareContactAgendas, canonicalizeContacts } = requ
 const { parseProjectCpeSheets } = require("./lib/project-cpe");
 const { validateProjectCpeModel } = require("./lib/project-cpe-model-validator");
 const { validateProjectCpeRadio } = require("./lib/project-cpe-radio-validator");
-const { ProjectCpePublisher } = require("./lib/project-cpe-publisher");
+const { ProjectCpePublisher, normalizePublicationRoute } = require("./lib/project-cpe-publisher");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8787);
@@ -2096,7 +2096,7 @@ function validateCpeProjectRadio(payload = {}) {
       status: result.status,
       failedCount: result.failedCount,
     });
-    if (NODE_MODE === "central" && stored.summary.allApproved) {
+    if (NODE_MODE === "central" && stored.summary.allApproved && stored.project.publicationRoute) {
       stored.publication = database.queueCpeProjectPublication(projectCode);
       setImmediate(() => processPublicationQueue().catch(() => {}));
     }
@@ -3383,7 +3383,9 @@ async function processPublicationQueue() {
       return true;
     }
     try {
-      const details = await projectPublisher.publish(job.projectCode);
+      const details = await projectPublisher.publish(job.projectCode, async (progress) => {
+        database.updateCpeProjectPublicationProgress(job.projectCode, progress);
+      });
       database.completeCpeProjectPublication(job.projectCode, details);
       logRuntimeEvent("cpe-project-published", {
         projectCode: job.projectCode,
@@ -3412,6 +3414,7 @@ function queueReadyCpeProjects() {
   let queued = 0;
   for (const project of database.listCpeProjects(200)) {
     if (database.getCpeProjectPublication(project.code)) continue;
+    if (!project.publicationRoute) continue;
     const summary = database.cpeProjectRadioValidationSummary(project.code);
     if (!summary.allApproved) continue;
     database.queueCpeProjectPublication(project.code);
@@ -3538,12 +3541,42 @@ const server = http.createServer((request, response) => {
       if (!project) throw new Error(`No existe el proyecto ${projectCode}`);
       sendJson(response, 200, {
         projectCode,
+        project: {
+          razonSocial: project.razonSocial,
+          responsible: project.responsible,
+          publicationRoute: project.publicationRoute,
+        },
         publication: database.getCpeProjectPublication(projectCode),
         destinations: projectPublisher.status(),
       });
     } catch (error) {
       sendJson(response, 400, { error: error.message });
     }
+    return;
+  }
+
+  if (request.method === "POST" && requestUrl.pathname === "/api/cpe-projects/publication-route") {
+    let body = "";
+    request.on("data", (chunk) => { body += chunk; if (body.length > 100_000) request.destroy(); });
+    request.on("end", () => {
+      try {
+        if (NODE_MODE !== "central") throw new Error("La ruta final se registra solamente en la VM central");
+        const payload = JSON.parse(body || "{}");
+        const projectCode = String(payload.projectCode || "").trim().toUpperCase();
+        if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un codigo de Proyecto CPE valido");
+        const route = normalizePublicationRoute(payload.route || {});
+        const project = database.updateCpeProjectPublicationRoute(projectCode, route);
+        const summary = database.cpeProjectRadioValidationSummary(projectCode);
+        let publication = database.getCpeProjectPublication(projectCode);
+        if (summary.allApproved) {
+          publication = database.queueCpeProjectPublication(projectCode);
+          setImmediate(() => processPublicationQueue().catch(() => {}));
+        }
+        sendJson(response, 200, { project, route, publication, queued: summary.allApproved });
+      } catch (error) {
+        sendJson(response, 400, { error: error.message });
+      }
+    });
     return;
   }
 

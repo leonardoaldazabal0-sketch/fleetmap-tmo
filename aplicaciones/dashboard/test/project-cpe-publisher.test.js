@@ -45,6 +45,12 @@ test("prepara y publica una entrega idempotente en el NAS", async (t) => {
     groupCount: 1,
     request: { radios: [{ issi: "10001" }] },
   });
+  database.updateCpeProjectPublicationRoute("CPE-20260923-001", {
+    clientPath: path.join("PRIVADAS", "CLIENTE"),
+    formNumber: "1394",
+    programmingDate: "2026-09-23",
+    programmerInitials: "LA",
+  });
   database.updateCpeProjectModelValidation("CPE-20260923-001", {
     projectStatus: "MODELO_APROBADO",
     fileName: "modelo.cpe",
@@ -77,11 +83,12 @@ test("prepara y publica una entrega idempotente en el NAS", async (t) => {
   assert.equal(first.drive.mode, "DRIVE_DESKTOP");
   assert.equal(first.drive.alreadyPublished, false);
   assert.equal(second.drive.alreadyPublished, true);
-  assert.equal(fs.existsSync(path.join(first.drive.path, "manifiesto.json")), true);
-  const manifest = JSON.parse(fs.readFileSync(path.join(first.nas.path, "manifiesto.json"), "utf8"));
+  assert.equal(fs.existsSync(path.join(first.drive.path, "MANIFIESTO-CPE-20260923-001.json")), true);
+  const manifest = JSON.parse(fs.readFileSync(path.join(first.nas.path, "MANIFIESTO-CPE-20260923-001.json"), "utf8"));
   assert.equal(manifest.projectCode, "CPE-20260923-001");
   assert.equal(manifest.radios, 1);
   assert.equal(manifest.files.length, 3);
+  assert.match(first.nas.path, /Plantillas x Clientes 2026.*FORM 1394.*20260923_LA.*DESPUES$/);
 });
 
 test("Drive permanece pendiente mientras falta la cuenta de servicio", () => {

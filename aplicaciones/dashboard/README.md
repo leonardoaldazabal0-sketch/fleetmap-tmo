@@ -210,10 +210,19 @@ envia solamente los archivos `.cpe` de esa carpeta y sus subcarpetas; los demas
 archivos se omiten. Cada CPE se valida individualmente y solo los aprobados se
 conservan en la carpeta controlada del proyecto.
 
-Cuando se aprueba la ultima radio, la VM crea automaticamente una entrega
-determinista con la solicitud, el modelo, los CPE aprobados y un manifiesto de
-hashes SHA-256. La publicacion se hace primero en Google Drive y despues en el
-TIC NAS. Los reintentos son idempotentes y no crean entregas duplicadas.
+Cuando se aprueba la ultima radio, el paso 5 solicita la ruta operativa, numero
+de FORM, fecha e iniciales. La VM crea una entrega determinista con la solicitud,
+el modelo, los CPE aprobados y un manifiesto de hashes SHA-256. Todo se publica
+en la misma carpeta `DESPUES`, respetando la estructura historica:
+
+```text
+Plantillas x Clientes AÑO\...\FORM ####\AAAAMMDD_INICIALES\DESPUES
+```
+
+La publicacion se hace primero en Google Drive y despues en el TIC NAS. El
+dashboard registra y muestra por separado el estado y la ruta exacta de ambos
+destinos. Los reintentos son idempotentes y no crean entregas duplicadas ni
+sobrescriben un archivo diferente que ya exista en el destino.
 
 La configuracion esta en:
 

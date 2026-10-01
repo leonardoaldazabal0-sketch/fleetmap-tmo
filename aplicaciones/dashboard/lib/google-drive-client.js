@@ -10,6 +10,10 @@ function escapeDriveQuery(value) {
   return String(value || "").replace(/\\/g, "\\\\").replace(/'/g, "\\'");
 }
 
+function md5File(filePath) {
+  return crypto.createHash("md5").update(fs.readFileSync(filePath)).digest("hex");
+}
+
 class GoogleDriveClient {
   constructor(options = {}) {
     this.folderId = String(options.folderId || "").trim();
@@ -117,32 +121,42 @@ class GoogleDriveClient {
 
   async uploadFile(parentId, name, filePath, mimeType = "application/octet-stream") {
     const existing = await this.findChild(parentId, name);
+    if (existing) {
+      if (String(existing.md5Checksum || "").toLowerCase() === md5File(filePath)) {
+        return { ...existing, alreadyUploaded: true };
+      }
+      throw new Error(`Ya existe un archivo diferente en Google Drive: ${name}`);
+    }
     const boundary = `cpe-${crypto.randomUUID()}`;
-    const metadata = existing ? { name } : { name, parents: [parentId] };
+    const metadata = { name, parents: [parentId] };
     const body = Buffer.concat([
       Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`),
       Buffer.from(`--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`),
       fs.readFileSync(filePath),
       Buffer.from(`\r\n--${boundary}--`),
     ]);
-    const target = existing
-      ? `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(existing.id)}?uploadType=multipart&supportsAllDrives=true&fields=id,name,md5Checksum,size`
-      : "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,md5Checksum,size";
+    const target = "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&supportsAllDrives=true&fields=id,name,md5Checksum,size";
     const response = await this.request(target, {
-      method: existing ? "PATCH" : "POST",
+      method: "POST",
       headers: { "Content-Type": `multipart/related; boundary=${boundary}` },
       body,
     });
     return response.json();
   }
 
-  async uploadTree(rootDirectory, projectCode, deliveryId) {
-    const projectFolder = await this.ensureFolder(this.folderId, projectCode);
-    const deliveryFolder = await this.ensureFolder(projectFolder.id, deliveryId);
+  async uploadTree(rootDirectory, remotePathSegments) {
+    const segments = Array.isArray(remotePathSegments)
+      ? remotePathSegments.map((item) => String(item || "").trim()).filter(Boolean)
+      : [];
+    if (!segments.length || segments.some((item) => item === "." || item === ".." || /[\\/]/.test(item))) {
+      throw new Error("La ruta remota de Google Drive no es valida");
+    }
+    let targetFolder = { id: this.folderId };
+    for (const segment of segments) targetFolder = await this.ensureFolder(targetFolder.id, segment);
     let uploaded = 0;
     const walk = async (localDirectory, remoteParentId) => {
       const entries = fs.readdirSync(localDirectory, { withFileTypes: true })
-        .sort((a, b) => a.name.localeCompare(b.name, "es"));
+        .sort((a, b) => Number(/^MANIFIESTO-/i.test(a.name)) - Number(/^MANIFIESTO-/i.test(b.name)) || a.name.localeCompare(b.name, "es"));
       for (const entry of entries) {
         const localPath = path.join(localDirectory, entry.name);
         if (entry.isDirectory()) {
@@ -152,13 +166,13 @@ class GoogleDriveClient {
           const mimeType = /\.json$/i.test(entry.name) ? "application/json"
             : /\.xlsx$/i.test(entry.name) ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               : "application/octet-stream";
-          await this.uploadFile(remoteParentId, entry.name, localPath, mimeType);
-          uploaded += 1;
+          const result = await this.uploadFile(remoteParentId, entry.name, localPath, mimeType);
+          if (!result.alreadyUploaded) uploaded += 1;
         }
       }
     };
-    await walk(rootDirectory, deliveryFolder.id);
-    return { folderId: deliveryFolder.id, projectFolderId: projectFolder.id, uploaded };
+    await walk(rootDirectory, targetFolder.id);
+    return { folderId: targetFolder.id, uploaded };
   }
 }
 

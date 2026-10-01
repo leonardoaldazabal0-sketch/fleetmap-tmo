@@ -383,10 +383,30 @@
               </div>
               <span id="projectPublicationStatus" class="status-pill">PENDIENTE</span>
             </div>
+            <div class="project-route-editor">
+              <label class="lookup-field project-route-path">
+                <span>Ruta del cliente (después de Plantillas x Clientes AÑO)</span>
+                <input id="projectRouteClientPath" type="text" maxlength="500" spellcheck="false" placeholder="PRIVADAS CON CONTRATISTAS\REPSOL\REFINERIA PAMPILLA\CONTRATISTAS\VERTISUB">
+              </label>
+              <label class="lookup-field">
+                <span>Número de FORM</span>
+                <input id="projectRouteForm" type="text" maxlength="8" inputmode="numeric" placeholder="1394">
+              </label>
+              <label class="lookup-field">
+                <span>Fecha de programación</span>
+                <input id="projectRouteDate" type="date">
+              </label>
+              <label class="lookup-field">
+                <span>Iniciales</span>
+                <input id="projectRouteInitials" type="text" maxlength="10" spellcheck="false" placeholder="LA">
+              </label>
+              <button id="projectRouteSaveButton" class="button primary" type="button">Guardar ruta y publicar</button>
+              <div class="project-route-preview"><span>Destino propuesto</span><code id="projectRoutePreview">Completa la ruta final</code></div>
+            </div>
             <div class="project-publication-grid">
               <div><span>Modo del dashboard</span><strong id="dashboardRuntimeMode">—</strong></div>
-              <div><span>Google Drive</span><strong id="projectDriveStatus">—</strong></div>
-              <div><span>TIC NAS</span><strong id="projectNasPublishStatus">—</strong></div>
+              <div class="project-destination-card"><span>Google Drive</span><strong id="projectDriveStatus">—</strong><code id="projectDrivePath">Ruta pendiente</code></div>
+              <div class="project-destination-card"><span>TIC NAS</span><strong id="projectNasPublishStatus">—</strong><code id="projectNasPublishPath">Ruta pendiente</code></div>
               <div><span>Cola de campo</span><strong id="projectFieldQueueStatus">—</strong></div>
               <button id="projectPublicationRefreshButton" class="button secondary" type="button">Actualizar estado</button>
               <button id="projectPublicationRetryButton" class="button primary" type="button" hidden>Reintentar publicación</button>

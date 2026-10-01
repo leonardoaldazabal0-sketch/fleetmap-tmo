@@ -7,7 +7,7 @@ try {
   throw new Error(`No se pudo cargar SQLite. Ejecuta npm install (${error.message})`);
 }
 
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 10;
 
 function parseFeatures(value) {
   if (!value) return null;
@@ -223,6 +223,7 @@ class CpeDatabase {
       ["modelFileSha256", "TEXT"],
       ["modelValidatedAt", "TEXT"],
       ["modelValidationJson", "TEXT"],
+      ["publicationRouteJson", "TEXT"],
     ];
     for (const [column, definition] of projectMigrations) {
       if (!projectColumns.has(column)) {
@@ -863,6 +864,7 @@ class CpeDatabase {
       modelFilePath: row.modelFilePath || "",
       modelFileSha256: row.modelFileSha256 || "",
       modelValidatedAt: row.modelValidatedAt || "",
+      publicationRoute: parseFeatures(row.publicationRouteJson) || null,
     };
     if (includeRequest) {
       project.request = parseFeatures(row.requestJson) || {};
@@ -902,6 +904,29 @@ class CpeDatabase {
     );
     if (!result.changes) throw new Error(`No existe el proyecto ${code}`);
     return this.getCpeProject(code);
+  }
+
+  updateCpeProjectPublicationRoute(code, route) {
+    const projectCode = String(code || "");
+    const now = new Date().toISOString();
+    const transaction = this.db.transaction(() => {
+      const result = this.db.prepare(`
+        UPDATE cpe_projects SET publicationRouteJson=?, updatedAt=? WHERE code=?
+      `).run(JSON.stringify(route || {}), now, projectCode);
+      if (!result.changes) throw new Error(`No existe el proyecto ${projectCode}`);
+      this.db.prepare(`
+        UPDATE cpe_project_publications
+        SET status='PENDIENTE', requestedAt=?, startedAt='', completedAt='',
+            nextAttemptAt=?, attempts=0, errorMessage='', detailsJson=''
+        WHERE projectCode=?
+      `).run(now, now, projectCode);
+      this.db.prepare(`
+        UPDATE cpe_projects SET status='RADIOS_APROBADAS', updatedAt=?
+        WHERE code=? AND status IN ('PUBLICADO','PUBLICACION_PENDIENTE')
+      `).run(now, projectCode);
+    });
+    transaction();
+    return this.getCpeProject(projectCode);
   }
 
   hydrateCpeProjectRadioValidation(row) {
@@ -1146,6 +1171,13 @@ class CpeDatabase {
     `).run(now, now, JSON.stringify(details || {}), String(code || ""));
     this.db.prepare("UPDATE cpe_projects SET status='PUBLICADO', updatedAt=? WHERE code=?")
       .run(now, String(code || ""));
+    return this.getCpeProjectPublication(code);
+  }
+
+  updateCpeProjectPublicationProgress(code, details) {
+    this.db.prepare(`
+      UPDATE cpe_project_publications SET detailsJson=? WHERE projectCode=?
+    `).run(JSON.stringify(details || {}), String(code || ""));
     return this.getCpeProjectPublication(code);
   }
 
