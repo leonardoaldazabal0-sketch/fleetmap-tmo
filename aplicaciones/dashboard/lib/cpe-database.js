@@ -1028,7 +1028,7 @@ class CpeDatabase {
   importCpeProjectBundle(bundle) {
     const project = bundle?.project;
     if (!project || !/^CPE-\d{8}-\d{3}$/.test(String(project.code || ""))) {
-      throw new Error("Paquete de Proyecto CPE invalido");
+      throw new Error("Paquete de programación de radios invalido");
     }
     if (!project.request || project.modelValidation?.status !== "APROBADO") {
       throw new Error("El proyecto debe incluir una solicitud y un modelo aprobado");

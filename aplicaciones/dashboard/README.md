@@ -203,7 +203,7 @@ node scripts\audit-conservative-layouts.js
 node scripts\error-report-by-cps-length.js
 ```
 
-## Proyecto CPE: carpetas, campo y publicacion
+## Programacion de Radios: carpetas, campo y publicacion
 
 El paso 4 permite seleccionar una carpeta completa desde la laptop. El navegador
 envia solamente los archivos `.cpe` de esa carpeta y sus subcarpetas; los demas

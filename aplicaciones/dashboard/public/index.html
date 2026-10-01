@@ -19,7 +19,7 @@
     <div class="app-layout">
       <nav class="side-nav" aria-label="Secciones">
         <button class="nav-button active" data-section="fleet" type="button"><span>01</span>Fleet Map</button>
-        <button class="nav-button" data-section="project" type="button"><span>02</span>Proyecto CPE</button>
+        <button class="nav-button" data-section="project" type="button"><span>02</span>Programación de Radios</button>
         <button class="nav-button" data-section="index" type="button"><span>03</span>Índice de Codeplugs</button>
         <button class="nav-button" data-section="quick" type="button"><span>04</span>Escaneo rápido</button>
         <button class="nav-button" data-section="lookup" type="button"><span>05</span>Búsqueda de radio</button>
@@ -243,8 +243,8 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">Flujo de programación controlada</span>
-              <h2 id="projectTitle">Proyecto CPE</h2>
-              <p>Sigue los pasos en orden. El código CPE mantiene unida la solicitud, el modelo y las radios programadas.</p>
+              <h2 id="projectTitle">Programación de Radios</h2>
+              <p>Sigue los pasos en orden. El código de programación CPE mantiene unida la solicitud, el modelo y las radios programadas.</p>
             </div>
           </div>
 
@@ -263,7 +263,7 @@
           <section class="panel project-step project-intake">
             <div class="project-step-heading">
               <span class="step-number">2</span>
-              <div><strong>Registrar solicitud</strong><small>Sube el Excel completado para obtener el código del Proyecto CPE.</small></div>
+              <div><strong>Registrar solicitud de programación</strong><small>Sube el Excel completado para obtener el código de programación CPE.</small></div>
             </div>
             <div class="project-upload-grid">
               <label class="lookup-field">
@@ -304,7 +304,7 @@
             </div>
             <div class="project-model-grid">
               <label class="lookup-field">
-                <span>Código del Proyecto CPE</span>
+                <span>Código de programación CPE</span>
                 <input id="projectModelCodeInput" type="text" maxlength="16" spellcheck="false" placeholder="CPE-AAAAMMDD-000">
               </label>
               <div class="project-file-field">
@@ -339,7 +339,7 @@
             </div>
             <div class="project-radio-grid">
               <label class="lookup-field">
-                <span>Código del Proyecto CPE</span>
+                <span>Código de programación CPE</span>
                 <input id="projectRadioCodeInput" type="text" maxlength="16" spellcheck="false" placeholder="CPE-AAAAMMDD-000">
               </label>
               <label class="lookup-field">
@@ -354,7 +354,7 @@
                 </label>
                 <small id="projectRadioFilesLabel">Ninguna carpeta seleccionada</small>
               </div>
-              <button id="projectFieldPrepareButton" class="button secondary" type="button" hidden>Guardar proyecto para campo</button>
+              <button id="projectFieldPrepareButton" class="button secondary" type="button" hidden>Preparar programación para campo</button>
               <button id="projectRadioValidateButton" class="button primary" type="button">Validar radios</button>
               <button id="projectRadioRefreshButton" class="button secondary" type="button">Consultar avance</button>
             </div>
@@ -585,14 +585,14 @@
               <section class="panel agenda-query-card">
                 <span class="agenda-method-number">03</span>
                 <div>
-                  <h3>Proyecto CPE</h3>
+                  <h3>Programación registrada</h3>
                   <p>Compara contra la agenda oficial solicitada.</p>
                 </div>
                 <label class="lookup-field">
-                  <span>Código del proyecto</span>
+                  <span>Código de programación CPE</span>
                   <input id="agendaProjectInput" type="text" spellcheck="false" placeholder="Ej. CPE-20260922-001">
                 </label>
-                <button id="agendaProjectButton" class="button primary" type="button">Revisar proyecto</button>
+                <button id="agendaProjectButton" class="button primary" type="button">Revisar programación</button>
               </section>
             </aside>
 
@@ -606,7 +606,7 @@
               </div>
               <section id="agendaReference" class="panel agenda-reference" hidden></section>
               <div id="agendaResults" class="agenda-result-list">
-                <div class="empty-state">Consulta una ISSI, sube una plantilla o indica un Proyecto CPE.</div>
+                <div class="empty-state">Consulta una ISSI, sube una plantilla o indica un código de programación CPE.</div>
               </div>
             </section>
           </div>

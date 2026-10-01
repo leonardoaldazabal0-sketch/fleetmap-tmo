@@ -526,7 +526,7 @@ async function loadProjectPublication(showMessages = false) {
 async function saveProjectPublicationRoute() {
   const projectCode = byId("projectRadioCodeInput").value.trim().toUpperCase();
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-    setMessage(byId("projectPublicationMessage"), "Escribe primero el código completo del Proyecto CPE en el paso 4.", "warning");
+    setMessage(byId("projectPublicationMessage"), "Escribe primero el código completo de programación CPE en el paso 4.", "warning");
     return;
   }
   const button = byId("projectRouteSaveButton");
@@ -560,7 +560,7 @@ async function saveProjectPublicationRoute() {
 async function prepareProjectForField() {
   const projectCode = byId("projectRadioCodeInput").value.trim().toUpperCase();
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-    setMessage(byId("projectRadioMessage"), "Escribe el código del Proyecto CPE que llevarás a campo.", "warning");
+    setMessage(byId("projectRadioMessage"), "Escribe el código de programación CPE que llevarás a campo.", "warning");
     return;
   }
   const button = byId("projectFieldPrepareButton");
@@ -575,13 +575,13 @@ async function prepareProjectForField() {
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "No se pudo guardar el proyecto para campo");
     byId("projectRadioProgrammerInput").value ||= payload.project?.responsible || "";
-    setMessage(byId("projectRadioMessage"), "Proyecto guardado. Ya puedes desconectarte y validar sin Internet.", "success");
+    setMessage(byId("projectRadioMessage"), "Programación guardada. Ya puedes desconectarte y validar sin Internet.", "success");
     await loadCpeProjects();
   } catch (error) {
     setMessage(byId("projectRadioMessage"), error.message, "error");
   } finally {
     button.disabled = false;
-    button.textContent = "Guardar proyecto para campo";
+    button.textContent = "Preparar programación para campo";
   }
 }
 
@@ -609,7 +609,7 @@ async function retryProjectPublication() {
 async function loadProjectRadioValidations(showMessages = true) {
   const projectCode = byId("projectRadioCodeInput").value.trim().toUpperCase();
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-    if (showMessages) setMessage(byId("projectRadioMessage"), "Escribe el código completo del Proyecto CPE.", "warning");
+    if (showMessages) setMessage(byId("projectRadioMessage"), "Escribe el código completo de programación CPE.", "warning");
     return null;
   }
   const response = await fetch(`/api/cpe-projects/radio-validations?projectCode=${encodeURIComponent(projectCode)}`);
@@ -626,7 +626,7 @@ async function validateProjectRadios() {
   const selectedFiles = [...byId("projectRadioFilesInput").files];
   const files = selectedFiles.filter((file) => /\.cpe$/i.test(file.name));
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-    setMessage(byId("projectRadioMessage"), "Escribe el código completo del Proyecto CPE.", "warning");
+    setMessage(byId("projectRadioMessage"), "Escribe el código completo de programación CPE.", "warning");
     byId("projectRadioCodeInput").focus();
     return;
   }
@@ -695,7 +695,7 @@ async function validateProjectModel() {
   const projectCode = byId("projectModelCodeInput").value.trim().toUpperCase();
   const file = byId("projectModelFileInput").files[0];
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-    setMessage(byId("projectModelMessage"), "Escribe el código completo del Proyecto CPE.", "warning");
+    setMessage(byId("projectModelMessage"), "Escribe el código completo de programación CPE.", "warning");
     byId("projectModelCodeInput").focus();
     return;
   }
@@ -1231,7 +1231,7 @@ async function runAgendaQuery(kind) {
   } else if (kind === "project") {
     const projectCode = byId("agendaProjectInput").value.trim();
     if (!projectCode) {
-      setMessage(byId("agendaMessage"), "Indica el código del Proyecto CPE.", "warning");
+      setMessage(byId("agendaMessage"), "Indica el código de programación CPE.", "warning");
       byId("agendaProjectInput").focus();
       return;
     }

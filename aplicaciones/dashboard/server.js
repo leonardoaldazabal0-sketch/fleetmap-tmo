@@ -1849,7 +1849,7 @@ function registerCpeProject(payload) {
   const base64 = String(payload?.fileBase64 || "");
   if (!responsible) throw new Error("Indica el nombre del programador responsable");
   if (responsible.length > 120) throw new Error("El nombre del responsable es demasiado largo");
-  if (!/\.xlsx$/i.test(sourceFileName)) throw new Error("Selecciona la plantilla Excel .xlsx del Proyecto CPE");
+  if (!/\.xlsx$/i.test(sourceFileName)) throw new Error("Selecciona la plantilla Excel .xlsx para programar las radios");
   if (!base64) throw new Error("Selecciona la plantilla completada por el cliente");
 
   const buffer = Buffer.from(base64, "base64");
@@ -1914,7 +1914,7 @@ function validateCpeProjectModel(payload = {}) {
   const projectCode = String(payload.projectCode || "").trim().toUpperCase();
   const sourceFileName = path.basename(String(payload.fileName || "modelo.cpe"));
   const base64 = String(payload.fileBase64 || "");
-  if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un código de Proyecto CPE válido");
+  if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un código de programación CPE válido");
   if (!/\.cpe$/i.test(sourceFileName)) throw new Error("Selecciona un archivo CPE modelo");
   if (!base64) throw new Error("Selecciona el CPE modelo que deseas validar");
   const project = database.getCpeProject(projectCode);
@@ -1997,7 +1997,7 @@ function projectStorageDirectory(project) {
     : path.resolve(projectsRoot, String(project?.code || ""));
   const relative = path.relative(projectsRoot, candidate);
   if (!relative || relative === ".." || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
-    throw new Error("No se pudo resolver la carpeta segura del Proyecto CPE");
+    throw new Error("No se pudo resolver la carpeta segura de la programación de radios");
   }
   fs.mkdirSync(candidate, { recursive: true });
   return candidate;
@@ -2011,7 +2011,7 @@ function validateCpeProjectRadio(payload = {}) {
     ? requestedSource : "DASHBOARD";
   const sourceFileName = path.basename(String(payload.fileName || "radio.cpe"));
   const base64 = String(payload.fileBase64 || "");
-  if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un código de Proyecto CPE válido");
+  if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un código de programación CPE válido");
   if (!programmer) throw new Error("Indica el nombre del programador responsable");
   if (!/\.cpe$/i.test(sourceFileName)) throw new Error("Selecciona un archivo CPE de una radio programada");
   if (!base64) throw new Error("Selecciona el CPE que deseas validar");
@@ -2135,7 +2135,7 @@ function compareRadioAgendas(payload = {}) {
       .map((radio) => ({ name: radio.contactName, issi: radio.issi })));
   }
   issis = [...new Set(issis.map((value) => String(value || "").trim()).filter((value) => /^\d{1,8}$/.test(value)))];
-  if (!issis.length) throw new Error("Indica un código de Proyecto CPE o una lista de ISSI");
+  if (!issis.length) throw new Error("Indica un código de programación CPE o una lista de ISSI");
   if (issis.length > 300) throw new Error("La comparación admite hasta 300 radios por vez");
 
   const byIssi = new Map();
@@ -2159,7 +2159,7 @@ function compareRadioAgendas(payload = {}) {
   });
 
   const mode = project ? "project" : issis.length === 1 ? "individual" : "group";
-  let referenceSource = project ? "PROYECTO CPE" : mode === "individual" ? "CONSULTA INDIVIDUAL" : "AGENDA MÁS FRECUENTE";
+  let referenceSource = project ? "PROGRAMACIÓN DE RADIOS" : mode === "individual" ? "CONSULTA INDIVIDUAL" : "AGENDA MÁS FRECUENTE";
   if (!project) {
     const frequencies = new Map();
     for (const result of results.filter((item) => item.agenda?.supported)) {
@@ -3485,7 +3485,7 @@ async function syncFieldQueue() {
 async function prepareFieldProject(projectCode) {
   if (NODE_MODE !== "field") throw new Error("Esta operacion solo esta disponible en el Dashboard de campo");
   const code = String(projectCode || "").trim().toUpperCase();
-  if (!/^CPE-\d{8}-\d{3}$/.test(code)) throw new Error("Indica un codigo de Proyecto CPE valido");
+  if (!/^CPE-\d{8}-\d{3}$/.test(code)) throw new Error("Indica un codigo de programacion CPE valido");
   const centralUrl = projectPublisher.config.field.centralUrl;
   if (!centralUrl) throw new Error("Falta configurar la URL del dashboard central");
   const response = await fetch(`${centralUrl}/api/cpe-projects/offline-bundle?projectCode=${encodeURIComponent(code)}`, {
@@ -3563,7 +3563,7 @@ const server = http.createServer((request, response) => {
         if (NODE_MODE !== "central") throw new Error("La ruta final se registra solamente en la VM central");
         const payload = JSON.parse(body || "{}");
         const projectCode = String(payload.projectCode || "").trim().toUpperCase();
-        if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un codigo de Proyecto CPE valido");
+        if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un codigo de programacion CPE valido");
         const route = normalizePublicationRoute(payload.route || {});
         const project = database.updateCpeProjectPublicationRoute(projectCode, route);
         const summary = database.cpeProjectRadioValidationSummary(projectCode);
@@ -3627,7 +3627,7 @@ const server = http.createServer((request, response) => {
   if (request.method === "GET" && requestUrl.pathname === "/api/cpe-projects/radio-validations") {
     const projectCode = String(requestUrl.searchParams.get("projectCode") || "").trim().toUpperCase();
     if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) {
-      sendJson(response, 400, { error: "Indica un código de Proyecto CPE válido" });
+      sendJson(response, 400, { error: "Indica un código de programación CPE válido" });
       return;
     }
     try {
