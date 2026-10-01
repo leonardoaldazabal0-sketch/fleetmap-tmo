@@ -221,11 +221,12 @@ La configuracion esta en:
 F:\CPE-TMO\configuracion\publicacion\publicacion.json
 ```
 
-Google Drive usa una cuenta de servicio. Su clave debe guardarse exclusivamente
-en la VM como `service-account.json` dentro de esa misma carpeta y la carpeta de
-Drive debe compartirse con el `client_email` de la cuenta. Si falta la clave o el
-permiso, el proyecto queda en `PENDIENTE DE ACCESO` y se reintenta sin copiar aun
-la entrega al NAS.
+Google Drive puede usar una cuenta de servicio o la unidad montada por Google
+Drive para escritorio. El API tiene prioridad cuando existe `service-account.json`;
+en caso contrario se usa `googleDrive.desktopRoot`. La clave, cuando se habilite,
+debe permanecer exclusivamente en la VM y la carpeta debe compartirse con su
+`client_email`. Si ninguna modalidad esta disponible, el proyecto queda en
+`PENDIENTE DE ACCESO` y se reintenta sin copiar aun la entrega al NAS.
 
 La edicion de campo se genera con:
 

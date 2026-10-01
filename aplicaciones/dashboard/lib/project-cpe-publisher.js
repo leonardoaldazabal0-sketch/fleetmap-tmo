@@ -30,6 +30,7 @@ function loadPublicationConfig(configDirectory) {
       enabled: drive.enabled !== false,
       folderId: String(drive.folderId || ""),
       credentialsFile: path.resolve(configDirectory, String(drive.serviceAccountFile || "service-account.json")),
+      desktopRoot: String(drive.desktopRoot || "").trim(),
     },
     field: {
       centralUrl: String(config.field?.centralUrl || "").replace(/\/$/, ""),
@@ -48,9 +49,23 @@ class ProjectCpePublisher {
 
   status() {
     const driveClient = new GoogleDriveClient(this.config.googleDrive);
-    const drive = this.config.googleDrive.enabled
+    const api = this.config.googleDrive.enabled
       ? driveClient.status()
       : { configured: false, disabled: true, error: "Google Drive esta deshabilitado" };
+    const desktopRoot = this.config.googleDrive.desktopRoot;
+    const desktopConfigured = Boolean(
+      this.config.googleDrive.enabled && desktopRoot && fs.existsSync(path.parse(desktopRoot).root),
+    );
+    const drive = this.config.googleDrive.enabled
+      ? {
+          configured: Boolean(api.configured || desktopConfigured),
+          mode: api.configured ? "API" : desktopConfigured ? "DRIVE_DESKTOP" : "",
+          account: api.account || "",
+          folderId: api.folderId || this.config.googleDrive.folderId,
+          desktopRoot,
+          error: api.configured || desktopConfigured ? "" : api.error,
+        }
+      : api;
     return {
       nas: {
         enabled: this.config.nas.enabled,
@@ -155,7 +170,36 @@ class ProjectCpePublisher {
   async publishDrive(prepared) {
     if (!this.config.googleDrive.enabled) return { disabled: true };
     const client = new GoogleDriveClient(this.config.googleDrive);
-    return client.uploadTree(prepared.deliveryRoot, prepared.project.code, prepared.deliveryId);
+    const apiStatus = client.status();
+    if (apiStatus.configured) {
+      return { mode: "API", ...(await client.uploadTree(prepared.deliveryRoot, prepared.project.code, prepared.deliveryId)) };
+    }
+    const desktopRoot = this.config.googleDrive.desktopRoot;
+    if (!desktopRoot || !fs.existsSync(path.parse(desktopRoot).root)) {
+      throw new Error(apiStatus.error || "Google Drive no esta configurado");
+    }
+    fs.mkdirSync(desktopRoot, { recursive: true });
+    const projectRoot = path.join(desktopRoot, prepared.project.code);
+    const finalPath = path.join(projectRoot, prepared.deliveryId);
+    if (!within(desktopRoot, finalPath)) throw new Error("Ruta de Google Drive fuera del directorio permitido");
+    const finalManifest = path.join(finalPath, "manifiesto.json");
+    if (fs.existsSync(finalManifest)) {
+      const existing = JSON.parse(fs.readFileSync(finalManifest, "utf8"));
+      if (existing.fingerprint === prepared.fingerprint) {
+        return { mode: "DRIVE_DESKTOP", path: finalPath, alreadyPublished: true };
+      }
+      throw new Error(`Ya existe una entrega diferente en Google Drive: ${finalPath}`);
+    }
+    fs.mkdirSync(projectRoot, { recursive: true });
+    const temporaryPath = path.join(projectRoot, `.partial-${prepared.deliveryId}-${crypto.randomUUID()}`);
+    try {
+      fs.cpSync(prepared.deliveryRoot, temporaryPath, { recursive: true, errorOnExist: true, force: false });
+      fs.renameSync(temporaryPath, finalPath);
+    } catch (error) {
+      try { fs.rmSync(temporaryPath, { recursive: true, force: true }); } catch {}
+      throw error;
+    }
+    return { mode: "DRIVE_DESKTOP", path: finalPath, alreadyPublished: false };
   }
 
   async publish(projectCode) {

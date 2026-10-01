@@ -13,11 +13,13 @@ test("prepara y publica una entrega idempotente en el NAS", async (t) => {
   const projectRoot = path.join(projectsRoot, "CPE-20260923-001");
   const configRoot = path.join(root, "config");
   const nasRoot = path.join(root, "nas");
+  const driveRoot = path.join(root, "drive");
   fs.mkdirSync(projectRoot, { recursive: true });
   fs.mkdirSync(configRoot, { recursive: true });
+  fs.mkdirSync(driveRoot, { recursive: true });
   fs.writeFileSync(path.join(configRoot, "publicacion.json"), JSON.stringify({
     nas: { enabled: true, root: nasRoot },
-    googleDrive: { enabled: false },
+    googleDrive: { enabled: true, desktopRoot: driveRoot },
   }));
   const requestFile = path.join(projectRoot, "solicitud-cliente.xlsx");
   const modelFile = path.join(projectRoot, "modelo.cpe");
@@ -72,7 +74,10 @@ test("prepara y publica una entrega idempotente en el NAS", async (t) => {
   assert.equal(first.deliveryId, second.deliveryId);
   assert.equal(first.nas.alreadyPublished, false);
   assert.equal(second.nas.alreadyPublished, true);
-  assert.equal(first.drive.disabled, true);
+  assert.equal(first.drive.mode, "DRIVE_DESKTOP");
+  assert.equal(first.drive.alreadyPublished, false);
+  assert.equal(second.drive.alreadyPublished, true);
+  assert.equal(fs.existsSync(path.join(first.drive.path, "manifiesto.json")), true);
   const manifest = JSON.parse(fs.readFileSync(path.join(first.nas.path, "manifiesto.json"), "utf8"));
   assert.equal(manifest.projectCode, "CPE-20260923-001");
   assert.equal(manifest.radios, 1);

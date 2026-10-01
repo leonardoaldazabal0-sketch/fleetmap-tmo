@@ -7,7 +7,8 @@
   "googleDrive": {
     "enabled": true,
     "folderId": "ID_DE_LA_CARPETA_COMPARTIDA",
-    "serviceAccountFile": "service-account.json"
+    "serviceAccountFile": "service-account.json",
+    "desktopRoot": "G:\\Mi unidad\\PROGRAMACION\\PROYECTOS CPE APROBADOS"
   },
   "field": {
     "centralUrl": "http://IP_DE_LA_VM:8787",

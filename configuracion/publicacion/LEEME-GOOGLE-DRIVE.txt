@@ -9,3 +9,9 @@ CONFIGURACION DE GOOGLE DRIVE API
 5. No subir service-account.json a Google Drive ni enviarlo a las laptops.
 
 El dashboard indicara "Drive pendiente de configurar" mientras falte la clave.
+
+ALTERNATIVA CON GOOGLE DRIVE PARA ESCRITORIO
+
+Si la VM tiene Google Drive montado, configura googleDrive.desktopRoot en
+publicacion.json. El API seguira teniendo prioridad cuando exista la clave; si no,
+el dashboard publicara en la unidad sincronizada sin guardar credenciales propias.
