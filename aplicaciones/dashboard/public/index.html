@@ -263,13 +263,21 @@
           <section class="panel project-step project-intake">
             <div class="project-step-heading">
               <span class="step-number">2</span>
-              <div><strong>Registrar solicitud de programación</strong><small>Sube el Excel completado para obtener el código de programación CPE.</small></div>
+              <div><strong>Registrar solicitud de programación</strong><small>Sube el formulario oficial y el Excel técnico para obtener el código de programación CPE.</small></div>
             </div>
             <div class="project-upload-grid">
               <label class="lookup-field">
                 <span>Programador responsable</span>
                 <input id="projectResponsibleInput" type="text" maxlength="120" autocomplete="name" placeholder="Nombre y apellido">
               </label>
+              <div class="project-file-field">
+                <span>Formulario oficial (Adición, Cambio o Programación)</span>
+                <label class="button secondary file-button">
+                  Seleccionar PDF
+                  <input id="projectWorkOrderFileInput" type="file" accept=".pdf,application/pdf">
+                </label>
+                <small id="projectWorkOrderFileLabel">Ningún archivo seleccionado</small>
+              </div>
               <div class="project-file-field">
                 <span>Excel recibido y completado internamente</span>
                 <label class="button secondary file-button">
@@ -292,6 +300,7 @@
               <div><span>Razón social</span><strong id="projectResultClient">—</strong></div>
               <div><span>Radios</span><strong id="projectResultRadios">0</strong></div>
               <div><span>Grupos TMO</span><strong id="projectResultGroups">0</strong></div>
+              <div><span>Formulario</span><strong id="projectResultForm">—</strong></div>
               <div><span>Observaciones</span><strong id="projectResultWarnings">0</strong></div>
             </div>
             <div id="projectWarnings" class="project-warnings" hidden></div>

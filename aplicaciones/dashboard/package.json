@@ -13,7 +13,8 @@
     "node": ">=20"
   },
   "dependencies": {
-    "better-sqlite3": "12.11.1"
+    "better-sqlite3": "12.11.1",
+    "pdf-parse": "^2.4.5"
   },
   "allowScripts": {
     "better-sqlite3@12.11.1": true

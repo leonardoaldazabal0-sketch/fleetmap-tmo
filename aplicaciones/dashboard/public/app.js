@@ -334,6 +334,10 @@ function renderRegisteredProject(payload) {
   byId("projectResultClient").textContent = project.razonSocial || "—";
   byId("projectResultRadios").textContent = formatNumber(project.radioCount);
   byId("projectResultGroups").textContent = formatNumber(project.groupCount);
+  const workOrder = payload.validation?.workOrder || project.workOrder || {};
+  byId("projectResultForm").textContent = workOrder.formNumber
+    ? `${workOrder.formType || "FORM"} ${workOrder.formNumber}`
+    : "—";
   byId("projectResultWarnings").textContent = formatNumber(project.warningCount);
   byId("projectModelCodeInput").value = project.code;
   byId("projectRadioCodeInput").value = project.code;
@@ -500,7 +504,7 @@ async function loadProjectPublication(showMessages = false) {
   if (!response.ok) throw new Error(payload.error || "No se pudo consultar la publicación");
   const publication = payload.publication;
   const route = payload.project?.publicationRoute || null;
-  applyProjectRoute(route);
+  applyProjectRoute(route || payload.routeSuggestion || null);
   const status = publication?.status || "PENDIENTE";
   const published = status === "PUBLICADO";
   const waitingAccess = status === "ESPERANDO_ACCESO" || /cuenta de servicio|acceso/i.test(publication?.errorMessage || "");
@@ -735,6 +739,7 @@ async function validateProjectModel() {
 
 async function registerCpeProject() {
   const file = byId("projectFileInput").files[0];
+  const workOrderFile = byId("projectWorkOrderFileInput").files[0];
   const responsible = byId("projectResponsibleInput").value.trim();
   if (!responsible) {
     setMessage(byId("projectMessage"), "Escribe el nombre del programador responsable.", "warning");
@@ -746,15 +751,30 @@ async function registerCpeProject() {
     byId("projectFileInput").click();
     return;
   }
+  if (!workOrderFile) {
+    setMessage(byId("projectMessage"), "Selecciona el formulario oficial de Adición, Cambio o Programación en PDF.", "warning");
+    byId("projectWorkOrderFileInput").click();
+    return;
+  }
+  if (workOrderFile.size > 20 * 1024 * 1024) {
+    setMessage(byId("projectMessage"), "El formulario PDF supera el límite de 20 MB.", "warning");
+    return;
+  }
   const button = byId("projectRegisterButton");
   button.disabled = true;
   button.textContent = "Validando…";
-  setMessage(byId("projectMessage"), "Validando identidades, grupos, funciones, gateway GPS, Escaneo y DMO…");
+  setMessage(byId("projectMessage"), "Comparando formulario, RUC, cliente y cantidad; después se validará la configuración técnica…");
   try {
     const response = await fetch("/api/cpe-projects/import", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ responsible, fileName: file.name, fileBase64: await fileToBase64(file) }),
+      body: JSON.stringify({
+        responsible,
+        fileName: file.name,
+        fileBase64: await fileToBase64(file),
+        workOrderFileName: workOrderFile.name,
+        workOrderFileBase64: await fileToBase64(workOrderFile),
+      }),
     });
     const payload = await response.json();
     if (!response.ok) {
@@ -1414,6 +1434,11 @@ byId("projectFileInput").addEventListener("change", (event) => {
   const file = event.target.files[0];
   byId("projectFileLabel").textContent = file ? file.name : "Ningún archivo seleccionado";
   if (file) setMessage(byId("projectMessage"), `Archivo listo: ${file.name}`, "success");
+});
+byId("projectWorkOrderFileInput").addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  byId("projectWorkOrderFileLabel").textContent = file ? file.name : "Ningún archivo seleccionado";
+  if (file) setMessage(byId("projectMessage"), `Formulario listo: ${file.name}`, "success");
 });
 byId("projectModelFileInput").addEventListener("change", (event) => {
   const file = event.target.files[0];

@@ -432,14 +432,14 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); outlin
 .project-template-controls label { display: grid; gap: 3px; color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .035em; text-transform: uppercase; }
 .project-template-controls input { width: 92px; min-height: 36px; }
 .project-template-controls .button { min-height: 36px; }
-.project-upload-grid { display: grid; grid-template-columns: minmax(220px, .9fr) minmax(300px, 1.2fr) auto; gap: 14px; align-items: end; }
+.project-upload-grid { display: grid; grid-template-columns: minmax(200px, .75fr) repeat(2, minmax(260px, 1fr)) auto; gap: 14px; align-items: end; }
 .project-model-grid { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(300px, 1.2fr) auto; gap: 14px; align-items: end; }
 .project-file-field { display: grid; grid-template-columns: auto minmax(120px, 1fr); gap: 6px 10px; align-items: center; }
 .project-file-field > span { grid-column: 1 / -1; color: var(--muted); font-size: 11px; font-weight: 750; letter-spacing: .035em; text-transform: uppercase; }
 .project-file-field small { overflow: hidden; color: var(--muted); text-overflow: ellipsis; white-space: nowrap; }
 .project-result-heading { margin: 24px 0 10px; }
 .project-result-heading h3 { font-size: 24px; letter-spacing: .02em; }
-.project-metrics { grid-template-columns: 1.5fr repeat(3, 1fr); }
+.project-metrics { grid-template-columns: 1.5fr repeat(4, 1fr); }
 .project-warnings { margin-top: 10px; padding: 12px 15px; border: 1px solid #efd0a8; border-radius: 8px; background: #fff9f1; color: #7a4b0a; }
 .project-warnings ul { margin: 0; padding-left: 20px; }
 .project-model-result { margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px; }

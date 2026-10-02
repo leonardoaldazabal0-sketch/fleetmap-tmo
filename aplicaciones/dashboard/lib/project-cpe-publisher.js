@@ -153,6 +153,12 @@ class ProjectCpePublisher {
       return { category: "RADIO", name, path: item.filePath, issi: item.expectedIssi };
     });
     const inputs = [
+      ...(project.workOrderFilePath ? [{
+        category: "FORMULARIO",
+        name: `FORMULARIO-${project.code}-${safeName(project.workOrderFileName, "formulario.pdf")}`,
+        path: project.workOrderFilePath,
+        issi: "",
+      }] : []),
       { category: "SOLICITUD", name: `SOLICITUD-${project.code}.xlsx`, path: project.sourceFilePath, issi: "" },
       { category: "MODELO", name: `MODELO-${project.code}-${safeName(project.modelFileName, "modelo.cpe")}`, path: project.modelFilePath, issi: "" },
       ...radioFiles,
@@ -192,6 +198,12 @@ class ProjectCpePublisher {
       deliveryId: collected.deliveryId,
       fingerprint: collected.fingerprint,
       destinationRelativePath: collected.route.relativePath,
+      workOrder: collected.project.workOrder ? {
+        type: collected.project.workOrder.formType,
+        number: collected.project.workOrder.formNumber,
+        code: collected.project.workOrder.formCode,
+        date: collected.project.workOrder.formDate,
+      } : null,
       radios: collected.summary.total,
       files: manifestFiles,
     };

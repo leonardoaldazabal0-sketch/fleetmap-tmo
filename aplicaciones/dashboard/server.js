@@ -17,6 +17,11 @@ const { parseProjectCpeSheets } = require("./lib/project-cpe");
 const { validateProjectCpeModel } = require("./lib/project-cpe-model-validator");
 const { validateProjectCpeRadio } = require("./lib/project-cpe-radio-validator");
 const { ProjectCpePublisher, normalizePublicationRoute } = require("./lib/project-cpe-publisher");
+const {
+  parseWorkOrderForm,
+  validateWorkOrderAgainstProject,
+  suggestPublicationRoute,
+} = require("./lib/work-order-form");
 
 const HOST = process.env.HOST || "0.0.0.0";
 const PORT = Number(process.env.PORT || 8787);
@@ -1843,22 +1848,89 @@ function parseAgendaIssiWorkbook(input) {
   throw new Error("No se encontró una columna llamada ISSI en la plantilla");
 }
 
-function registerCpeProject(payload) {
+async function registerCpeProject(payload) {
   const responsible = String(payload?.responsible || "").trim();
   const sourceFileName = path.basename(String(payload?.fileName || "solicitud-cliente.xlsx"));
   const base64 = String(payload?.fileBase64 || "");
+  const workOrderFileName = path.basename(String(payload?.workOrderFileName || "formulario-trabajo.pdf"));
+  const workOrderBase64 = String(payload?.workOrderFileBase64 || "");
   if (!responsible) throw new Error("Indica el nombre del programador responsable");
   if (responsible.length > 120) throw new Error("El nombre del responsable es demasiado largo");
   if (!/\.xlsx$/i.test(sourceFileName)) throw new Error("Selecciona la plantilla Excel .xlsx para programar las radios");
   if (!base64) throw new Error("Selecciona la plantilla completada por el cliente");
+  if (!/\.pdf$/i.test(workOrderFileName) || !workOrderBase64) throw new Error("Selecciona el formulario oficial de Adición, Cambio o Programación en PDF");
 
   const buffer = Buffer.from(base64, "base64");
+  const workOrderBuffer = Buffer.from(workOrderBase64, "base64");
   const validation = parseProjectCpeWorkbook(buffer);
   if (!validation.valid) return { registered: false, validation };
+  const workOrder = await parseWorkOrderForm(workOrderBuffer, workOrderFileName);
+  const administrativeValidation = validateWorkOrderAgainstProject(workOrder, validation);
+  validation.administrative = administrativeValidation;
+  validation.workOrder = workOrder;
+  validation.errors.push(...administrativeValidation.errors);
+  validation.warnings.push(...administrativeValidation.warnings);
+  validation.valid = validation.errors.length === 0;
+  if (!validation.valid) return { registered: false, validation };
+
+  validation.summary.razonSocial = workOrder.clientName;
+  validation.summary.ruc = workOrder.ruc;
+  validation.summary.contractRef = workOrder.contractNumber || validation.summary.contractRef;
+  validation.request.metadata = {
+    ...validation.request.metadata,
+    razonSocial: workOrder.clientName,
+    ruc: workOrder.ruc,
+    contractRef: workOrder.contractNumber || validation.request.metadata.contractRef,
+    administrativeForm: {
+      type: workOrder.formType,
+      number: workOrder.formNumber,
+      code: workOrder.formCode,
+      requestType: workOrder.requestType,
+      date: workOrder.formDate,
+    },
+  };
+  for (const radio of validation.request.radios || []) {
+    radio.razonSocial = workOrder.clientName;
+    radio.ruc = workOrder.ruc;
+    if (workOrder.contractNumber) radio.contractRef = workOrder.contractNumber;
+  }
   const fileSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+  const workOrderFileSha256 = crypto.createHash("sha256").update(workOrderBuffer).digest("hex");
   const existing = database.findCpeProjectByHash(fileSha256);
   if (existing) {
-    return { registered: true, duplicate: true, project: existing, validation };
+    if (existing.workOrderFileSha256 && existing.workOrderFileSha256 !== workOrderFileSha256) {
+      throw new Error(`El Excel ya pertenece a ${existing.code}, pero tiene asociado otro formulario oficial`);
+    }
+    let workOrderFilePath = existing.workOrderFilePath;
+    let wroteWorkOrder = false;
+    if (!existing.workOrderFileSha256) {
+      const projectDirectory = projectStorageDirectory(existing);
+      workOrderFilePath = path.join(projectDirectory, "formulario-trabajo.pdf");
+      if (fs.existsSync(workOrderFilePath)) {
+        const storedHash = crypto.createHash("sha256").update(fs.readFileSync(workOrderFilePath)).digest("hex");
+        if (storedHash !== workOrderFileSha256) throw new Error(`Ya existe otro formulario en ${existing.code}`);
+      } else {
+        fs.writeFileSync(workOrderFilePath, workOrderBuffer, { flag: "wx" });
+        wroteWorkOrder = true;
+      }
+    }
+    let updated;
+    try {
+      updated = database.updateCpeProjectWorkOrder(existing.code, {
+        clientName: workOrder.clientName,
+        ruc: workOrder.ruc,
+        contractNumber: workOrder.contractNumber || existing.contractRef,
+        fileName: workOrderFileName,
+        filePath: workOrderFilePath,
+        fileSha256: workOrderFileSha256,
+        data: workOrder,
+        request: validation.request,
+      });
+    } catch (error) {
+      if (wroteWorkOrder) fs.rmSync(workOrderFilePath, { force: true });
+      throw error;
+    }
+    return { registered: true, duplicate: true, project: updated, validation };
   }
 
   const code = database.nextCpeProjectCode(new Date());
@@ -1870,11 +1942,13 @@ function registerCpeProject(payload) {
   }
   fs.mkdirSync(projectDirectory, { recursive: false });
   const sourceFilePath = path.join(projectDirectory, "solicitud-cliente.xlsx");
-  fs.writeFileSync(sourceFilePath, buffer, { flag: "wx" });
+  const workOrderFilePath = path.join(projectDirectory, "formulario-trabajo.pdf");
 
   const summary = validation.summary || {};
   let project;
   try {
+    fs.writeFileSync(sourceFilePath, buffer, { flag: "wx" });
+    fs.writeFileSync(workOrderFilePath, workOrderBuffer, { flag: "wx" });
     project = database.createCpeProject({
       code,
       responsible,
@@ -1889,10 +1963,16 @@ function registerCpeProject(payload) {
       groupCount: summary.groups,
       warnings: validation.warnings,
       request: validation.request,
+      workOrderFileName,
+      workOrderFilePath,
+      workOrderFileSha256,
+      workOrder,
+      workOrderValidatedAt: new Date().toISOString(),
     });
   } catch (error) {
     try {
-      fs.unlinkSync(sourceFilePath);
+      fs.rmSync(sourceFilePath, { force: true });
+      fs.rmSync(workOrderFilePath, { force: true });
       fs.rmdirSync(projectDirectory);
     } catch {
       // Si la limpieza falla, el archivo queda aislado y nunca se publica como proyecto registrado.
@@ -1906,6 +1986,8 @@ function registerCpeProject(payload) {
     radios: project.radioCount,
     groups: project.groupCount,
     warnings: project.warningCount,
+    formType: workOrder.formType,
+    formNumber: workOrder.formNumber,
   });
   return { registered: true, duplicate: false, project, validation };
 }
@@ -3524,7 +3606,12 @@ const server = http.createServer((request, response) => {
       const project = database.getCpeProject(projectCode);
       if (!project) throw new Error(`No existe el proyecto ${projectCode}`);
       if (project.modelValidation?.status !== "APROBADO") throw new Error("Primero debes aprobar el CPE maestro");
-      const { sourceFilePath: _source, modelFilePath: _model, ...portableProject } = project;
+      const {
+        sourceFilePath: _source,
+        modelFilePath: _model,
+        workOrderFilePath: _workOrder,
+        ...portableProject
+      } = project;
       sendJson(response, 200, { schema: "PROYECTO_CPE_CAMPO_V1", exportedAt: new Date().toISOString(), project: portableProject });
     } catch (error) {
       sendJson(response, 400, { error: error.message });
@@ -3543,7 +3630,9 @@ const server = http.createServer((request, response) => {
           razonSocial: project.razonSocial,
           responsible: project.responsible,
           publicationRoute: project.publicationRoute,
+          workOrder: project.workOrder,
         },
+        routeSuggestion: project.publicationRoute ? null : suggestPublicationRoute(project),
         publication: database.getCpeProjectPublication(projectCode),
         destinations: projectPublisher.status(),
       });
@@ -3696,15 +3785,15 @@ const server = http.createServer((request, response) => {
     request.on("data", (chunk) => {
       if (tooLarge) return;
       body += chunk;
-      if (Buffer.byteLength(body, "utf8") > 22 * 1024 * 1024) tooLarge = true;
+      if (Buffer.byteLength(body, "utf8") > 50 * 1024 * 1024) tooLarge = true;
     });
-    request.on("end", () => {
+    request.on("end", async () => {
       try {
         if (tooLarge) {
           sendJson(response, 413, { error: "La solicitud supera el límite permitido" });
           return;
         }
-        const result = registerCpeProject(JSON.parse(body || "{}"));
+        const result = await registerCpeProject(JSON.parse(body || "{}"));
         sendJson(response, result.registered ? 201 : 422, result);
       } catch (error) {
         sendJson(response, 400, { error: error.message });

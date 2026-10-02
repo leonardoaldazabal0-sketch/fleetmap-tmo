@@ -7,7 +7,7 @@ try {
   throw new Error(`No se pudo cargar SQLite. Ejecuta npm install (${error.message})`);
 }
 
-const SCHEMA_VERSION = 10;
+const SCHEMA_VERSION = 11;
 
 function parseFeatures(value) {
   if (!value) return null;
@@ -133,7 +133,12 @@ class CpeDatabase {
         groupCount INTEGER NOT NULL DEFAULT 0,
         warningCount INTEGER NOT NULL DEFAULT 0,
         warningsJson TEXT,
-        requestJson TEXT NOT NULL
+        requestJson TEXT NOT NULL,
+        workOrderFileName TEXT,
+        workOrderFilePath TEXT,
+        workOrderFileSha256 TEXT,
+        workOrderJson TEXT,
+        workOrderValidatedAt TEXT
       );
 
       CREATE TABLE IF NOT EXISTS cpe_project_radio_validations (
@@ -224,6 +229,11 @@ class CpeDatabase {
       ["modelValidatedAt", "TEXT"],
       ["modelValidationJson", "TEXT"],
       ["publicationRouteJson", "TEXT"],
+      ["workOrderFileName", "TEXT"],
+      ["workOrderFilePath", "TEXT"],
+      ["workOrderFileSha256", "TEXT"],
+      ["workOrderJson", "TEXT"],
+      ["workOrderValidatedAt", "TEXT"],
     ];
     for (const [column, definition] of projectMigrations) {
       if (!projectColumns.has(column)) {
@@ -812,11 +822,15 @@ class CpeDatabase {
       INSERT INTO cpe_projects (
         code, createdAt, updatedAt, status, responsible, sourceFileName,
         sourceFilePath, fileSha256, schemaVersion, razonSocial, ruc,
-        contractRef, radioCount, groupCount, warningCount, warningsJson, requestJson
+        contractRef, radioCount, groupCount, warningCount, warningsJson, requestJson,
+        workOrderFileName, workOrderFilePath, workOrderFileSha256, workOrderJson,
+        workOrderValidatedAt
       ) VALUES (
         @code, @createdAt, @updatedAt, @status, @responsible, @sourceFileName,
         @sourceFilePath, @fileSha256, @schemaVersion, @razonSocial, @ruc,
-        @contractRef, @radioCount, @groupCount, @warningCount, @warningsJson, @requestJson
+        @contractRef, @radioCount, @groupCount, @warningCount, @warningsJson, @requestJson,
+        @workOrderFileName, @workOrderFilePath, @workOrderFileSha256, @workOrderJson,
+        @workOrderValidatedAt
       )
     `).run({
       code: project.code,
@@ -836,6 +850,11 @@ class CpeDatabase {
       warningCount: Number(project.warnings?.length || 0),
       warningsJson: JSON.stringify(project.warnings || []),
       requestJson: JSON.stringify(project.request || {}),
+      workOrderFileName: project.workOrderFileName || "",
+      workOrderFilePath: project.workOrderFilePath || "",
+      workOrderFileSha256: project.workOrderFileSha256 || "",
+      workOrderJson: JSON.stringify(project.workOrder || {}),
+      workOrderValidatedAt: project.workOrderValidatedAt || now,
     });
     return this.hydrateCpeProject(this.db.prepare("SELECT * FROM cpe_projects WHERE id=?").get(result.lastInsertRowid), true);
   }
@@ -865,10 +884,15 @@ class CpeDatabase {
       modelFileSha256: row.modelFileSha256 || "",
       modelValidatedAt: row.modelValidatedAt || "",
       publicationRoute: parseFeatures(row.publicationRouteJson) || null,
+      workOrderFileName: row.workOrderFileName || "",
+      workOrderFilePath: row.workOrderFilePath || "",
+      workOrderFileSha256: row.workOrderFileSha256 || "",
+      workOrderValidatedAt: row.workOrderValidatedAt || "",
     };
     if (includeRequest) {
       project.request = parseFeatures(row.requestJson) || {};
       project.modelValidation = parseFeatures(row.modelValidationJson) || null;
+      project.workOrder = parseFeatures(row.workOrderJson) || null;
     }
     return project;
   }
@@ -926,6 +950,34 @@ class CpeDatabase {
       `).run(now, projectCode);
     });
     transaction();
+    return this.getCpeProject(projectCode);
+  }
+
+  updateCpeProjectWorkOrder(code, workOrder) {
+    const now = new Date().toISOString();
+    const projectCode = String(code || "");
+    const current = this.getCpeProject(projectCode);
+    if (!current) throw new Error(`No existe el proyecto ${projectCode}`);
+    const result = this.db.prepare(`
+      UPDATE cpe_projects SET
+        updatedAt=?, razonSocial=?, ruc=?, contractRef=?,
+        workOrderFileName=?, workOrderFilePath=?, workOrderFileSha256=?,
+        workOrderJson=?, workOrderValidatedAt=?, requestJson=?
+      WHERE code=?
+    `).run(
+      now,
+      workOrder.clientName || "",
+      workOrder.ruc || "",
+      workOrder.contractNumber || "",
+      workOrder.fileName || "",
+      workOrder.filePath || "",
+      workOrder.fileSha256 || "",
+      JSON.stringify(workOrder.data || {}),
+      now,
+      JSON.stringify(workOrder.request || current.request || {}),
+      projectCode,
+    );
+    if (!result.changes) throw new Error(`No existe el proyecto ${projectCode}`);
     return this.getCpeProject(projectCode);
   }
 
