@@ -300,7 +300,7 @@
           <section class="panel project-step project-model-step">
             <div class="project-step-heading">
               <span class="step-number">3</span>
-              <div><strong>Validar CPE modelo</strong><small>El modelo debe aprobarse antes de programar las radios.</small></div>
+              <div><strong>Validar CPE maestro</strong><small>Debe contener el catálogo general y los parámetros comunes antes de programar.</small></div>
             </div>
             <div class="project-model-grid">
               <label class="lookup-field">
@@ -308,21 +308,21 @@
                 <input id="projectModelCodeInput" type="text" maxlength="16" spellcheck="false" placeholder="CPE-AAAAMMDD-000">
               </label>
               <div class="project-file-field">
-                <span>Archivo CPE modelo</span>
+                <span>Archivo CPE maestro</span>
                 <label class="button secondary file-button">
                   Seleccionar CPE
                   <input id="projectModelFileInput" type="file" accept=".cpe">
                 </label>
                 <small id="projectModelFileLabel">Ningún archivo seleccionado</small>
               </div>
-              <button id="projectModelValidateButton" class="button primary" type="button">Validar CPE modelo</button>
+              <button id="projectModelValidateButton" class="button primary" type="button">Validar CPE maestro</button>
             </div>
             <div id="projectModelMessage" class="inline-message" hidden></div>
             <section id="projectModelResult" class="project-model-result" hidden>
               <div class="project-model-verdict">
-                <div><span>Resultado del modelo</span><strong id="projectModelVerdict">—</strong></div>
+                <div><span>Resultado del maestro</span><strong id="projectModelVerdict">—</strong></div>
                 <div><span>CP / Software</span><strong id="projectModelVersion">—</strong></div>
-                <div><span>Radios aplicables</span><strong id="projectModelIssis">—</strong></div>
+                <div><span>Radios cubiertas</span><strong id="projectModelIssis">—</strong></div>
               </div>
               <div id="projectModelChecks" class="project-model-checks"></div>
               <div id="projectModelNotes" class="project-model-notes"></div>
@@ -333,7 +333,7 @@
             <div class="project-radio-heading">
               <div class="project-step-heading">
                 <span class="step-number">4</span>
-                <div><strong>Programar y validar radios</strong><small id="projectFinalStepText">Se realiza después de aprobar el CPE modelo.</small></div>
+                <div><strong>Programar y validar radios</strong><small id="projectFinalStepText">Se realiza después de aprobar el CPE maestro.</small></div>
               </div>
               <span id="projectFinalStepStatus" class="status-pill">PENDIENTE</span>
             </div>

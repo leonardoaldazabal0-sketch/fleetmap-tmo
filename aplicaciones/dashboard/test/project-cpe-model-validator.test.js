@@ -52,7 +52,7 @@ function fixture() {
   };
 }
 
-test("aprueba un CPE modelo que coincide con el perfil solicitado", () => {
+test("aprueba un CPE maestro que cubre todos los recursos solicitados", () => {
   const { project, model } = fixture();
   const result = validateProjectCpeModel(project, model);
   assert.equal(result.status, "APROBADO");
@@ -73,14 +73,20 @@ test("rechaza grupos adicionales, labels diferentes y funciones incorrectas", ()
   assert.equal(result.checks.find((check) => check.key === "dmo").passed, false);
 });
 
-test("selecciona el perfil compatible cuando un proyecto tiene configuraciones distintas", () => {
+test("exige que el CPE maestro reúna los grupos de todas las configuraciones", () => {
   const { project, model } = fixture();
   project.request.radios[1] = {
     ...project.request.radios[1],
     groups: [{ label: "OTRO", gssi: "8000" }],
   };
+  const incomplete = validateProjectCpeModel(project, model);
+  assert.equal(incomplete.status, "NO APROBADO");
+  assert.match(incomplete.checks.find((check) => check.key === "groups").detail, /8000/);
+
+  model.rows.push({ alias: "OTRO", gssi: 8000 });
   const result = validateProjectCpeModel(project, model);
   assert.equal(result.status, "APROBADO");
   assert.equal(result.profileCount, 2);
-  assert.deepEqual(result.appliesToIssis, ["37019"]);
+  assert.equal(result.masterGroupCount, 3);
+  assert.deepEqual(result.appliesToIssis, ["37019", "37020"]);
 });

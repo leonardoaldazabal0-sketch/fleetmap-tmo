@@ -1915,8 +1915,8 @@ function validateCpeProjectModel(payload = {}) {
   const sourceFileName = path.basename(String(payload.fileName || "modelo.cpe"));
   const base64 = String(payload.fileBase64 || "");
   if (!/^CPE-\d{8}-\d{3}$/.test(projectCode)) throw new Error("Indica un código de programación CPE válido");
-  if (!/\.cpe$/i.test(sourceFileName)) throw new Error("Selecciona un archivo CPE modelo");
-  if (!base64) throw new Error("Selecciona el CPE modelo que deseas validar");
+  if (!/\.cpe$/i.test(sourceFileName)) throw new Error("Selecciona un archivo CPE maestro");
+  if (!base64) throw new Error("Selecciona el CPE maestro que deseas validar");
   const project = database.getCpeProject(projectCode);
   if (!project) throw new Error(`No existe el proyecto ${projectCode}`);
 
@@ -1924,7 +1924,7 @@ function validateCpeProjectModel(payload = {}) {
   if (buffer.length < 16 || buffer.subarray(0, 7).toString("ascii") !== "CPDFile") {
     throw new Error("El archivo seleccionado no parece un CPE Motorola válido");
   }
-  if (buffer.length > 15 * 1024 * 1024) throw new Error("El CPE modelo supera el límite de 15 MB");
+  if (buffer.length > 15 * 1024 * 1024) throw new Error("El CPE maestro supera el límite de 15 MB");
 
   const safeFileName = sourceFileName.replace(/[^A-Za-z0-9._\-\[\]]+/g, "_").slice(-180);
   const temporaryRoot = path.resolve(runtimePaths.dir("temporales"));
@@ -1963,9 +1963,7 @@ function validateCpeProjectModel(payload = {}) {
     };
     result.model = modelSummary;
     const fileSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
-    const projectStatus = approved
-      ? result.profileCount === 1 ? "MODELO_APROBADO" : "MODELO_APROBADO_PARCIAL"
-      : "MODELO_NO_APROBADO";
+    const projectStatus = approved ? "MODELO_MAESTRO_APROBADO" : "MODELO_MAESTRO_NO_APROBADO";
     const updatedProject = database.updateCpeProjectModelValidation(projectCode, {
       projectStatus,
       fileName: sourceFileName,
@@ -2018,7 +2016,7 @@ function validateCpeProjectRadio(payload = {}) {
   const project = database.getCpeProject(projectCode);
   if (!project) throw new Error(`No existe el proyecto ${projectCode}`);
   if (project.modelValidation?.status !== "APROBADO") {
-    throw new Error("Primero debes aprobar el CPE modelo en el paso 3");
+    throw new Error("Primero debes aprobar el CPE maestro en el paso 3");
   }
 
   const buffer = Buffer.from(base64, "base64");
@@ -3525,7 +3523,7 @@ const server = http.createServer((request, response) => {
     try {
       const project = database.getCpeProject(projectCode);
       if (!project) throw new Error(`No existe el proyecto ${projectCode}`);
-      if (project.modelValidation?.status !== "APROBADO") throw new Error("Primero debes aprobar el CPE modelo");
+      if (project.modelValidation?.status !== "APROBADO") throw new Error("Primero debes aprobar el CPE maestro");
       const { sourceFilePath: _source, modelFilePath: _model, ...portableProject } = project;
       sendJson(response, 200, { schema: "PROYECTO_CPE_CAMPO_V1", exportedAt: new Date().toISOString(), project: portableProject });
     } catch (error) {
@@ -3726,7 +3724,7 @@ const server = http.createServer((request, response) => {
     request.on("end", () => {
       try {
         if (tooLarge) {
-          sendJson(response, 413, { error: "El CPE modelo supera el límite permitido" });
+          sendJson(response, 413, { error: "El CPE maestro supera el límite permitido" });
           return;
         }
         sendJson(response, 200, validateCpeProjectModel(JSON.parse(body || "{}")));

@@ -354,7 +354,9 @@ function renderProjectModelValidation(payload) {
   verdict.textContent = result.status || "NO APROBADO";
   verdict.className = approved ? "ok" : "error";
   byId("projectModelVersion").textContent = [result.model?.codeplug ? `CP ${result.model.codeplug}` : "CP no identificado", result.model?.software || "SW no identificado"].join(" · ");
-  byId("projectModelIssis").textContent = (result.appliesToIssis || []).join(", ") || "Ninguna";
+  const coveredIssis = result.appliesToIssis || [];
+  byId("projectModelIssis").textContent = coveredIssis.length ? `${formatNumber(coveredIssis.length)} radios` : "Ninguna";
+  byId("projectModelIssis").title = coveredIssis.join(", ");
   byId("projectModelChecks").innerHTML = (result.checks || []).map((check) => `<div class="project-model-check ${check.passed ? "" : "failed"}">
     <b>${check.passed ? "✓" : "×"}</b>
     <strong>${escapeHtml(check.label)}</strong>
@@ -369,8 +371,8 @@ function renderProjectModelValidation(payload) {
   finalStatus.textContent = approved ? "LISTO PARA PROGRAMAR" : "BLOQUEADO";
   finalStatus.className = `status-pill ${approved ? "ok" : "error"}`;
   byId("projectFinalStepText").textContent = approved
-    ? "El modelo fue aprobado. Selecciona abajo los CPE leídos después de programar."
-    : "Corrige el CPE modelo y vuelve a validarlo antes de programar.";
+    ? "El CPE maestro fue aprobado. Ajusta cada radio según la solicitud y valida sus lecturas finales."
+    : "Corrige el CPE maestro y vuelve a validarlo antes de programar.";
   if (approved) byId("projectRadioCodeInput").value = byId("projectModelCodeInput").value.trim().toUpperCase();
 }
 
@@ -700,7 +702,7 @@ async function validateProjectModel() {
     return;
   }
   if (!file) {
-    setMessage(byId("projectModelMessage"), "Selecciona el archivo CPE modelo.", "warning");
+    setMessage(byId("projectModelMessage"), "Selecciona el archivo CPE maestro.", "warning");
     byId("projectModelFileInput").click();
     return;
   }
@@ -715,11 +717,11 @@ async function validateProjectModel() {
       body: JSON.stringify({ projectCode, fileName: file.name, fileBase64: await fileToBase64(file) }),
     });
     const payload = await response.json();
-    if (!response.ok) throw new Error(payload.error || "No se pudo validar el CPE modelo");
+    if (!response.ok) throw new Error(payload.error || "No se pudo validar el CPE maestro");
     renderProjectModelValidation(payload);
     setMessage(
       byId("projectModelMessage"),
-      payload.result.status === "APROBADO" ? "CPE modelo aprobado." : `CPE modelo no aprobado: ${payload.result.failedCount} diferencia(s).`,
+      payload.result.status === "APROBADO" ? "CPE maestro aprobado." : `CPE maestro no aprobado: ${payload.result.failedCount} diferencia(s).`,
       payload.result.status === "APROBADO" ? "success" : "error",
     );
     await loadCpeProjects();
@@ -727,7 +729,7 @@ async function validateProjectModel() {
     setMessage(byId("projectModelMessage"), error.message, "error");
   } finally {
     button.disabled = false;
-    button.textContent = "Validar CPE modelo";
+    button.textContent = "Validar CPE maestro";
   }
 }
 
