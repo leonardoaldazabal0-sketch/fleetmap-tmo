@@ -30,6 +30,7 @@ class CpeDatabase {
     this.db.pragma("foreign_keys = ON");
     this.db.pragma("busy_timeout = 10000");
     this.createSchema();
+    this.reconcilePublishedCpeProjectStatuses();
     this.prepareStatements();
   }
 
@@ -909,7 +910,53 @@ class CpeDatabase {
     return this.hydrateCpeProject(row, true);
   }
 
+  getCpeProjectDownstreamState(code) {
+    const projectCode = String(code || "");
+    const radioValidationCount = Number(this.db.prepare(`
+      SELECT COUNT(*) AS total FROM cpe_project_radio_validations WHERE projectCode=?
+    `).get(projectCode)?.total || 0);
+    const publication = this.getCpeProjectPublication(projectCode);
+    return {
+      radioValidationCount,
+      publication,
+      hasActivity: radioValidationCount > 0 || Boolean(publication),
+    };
+  }
+
+  reconcilePublishedCpeProjectStatuses() {
+    const now = new Date().toISOString();
+    const result = this.db.prepare(`
+      UPDATE cpe_projects
+      SET status='PUBLICADO', updatedAt=?
+      WHERE status<>'PUBLICADO' AND EXISTS (
+        SELECT 1 FROM cpe_project_publications publication
+        WHERE publication.projectCode=cpe_projects.code
+          AND publication.status='PUBLICADO'
+      )
+    `).run(now);
+    return Number(result.changes || 0);
+  }
+
   updateCpeProjectModelValidation(code, validation) {
+    const projectCode = String(code || "");
+    const current = this.getCpeProject(projectCode);
+    if (!current) throw new Error(`No existe el proyecto ${code}`);
+    const downstream = this.getCpeProjectDownstreamState(projectCode);
+    const nextSha256 = String(validation.fileSha256 || "");
+    if (downstream.hasActivity && String(current.modelFileSha256 || "") !== nextSha256) {
+      throw new Error("No se puede reemplazar el CPE maestro después de validar radios o iniciar la publicación");
+    }
+
+    let projectStatus = validation.projectStatus;
+    if (downstream.publication?.status === "PUBLICADO") {
+      projectStatus = "PUBLICADO";
+    } else if (downstream.publication) {
+      projectStatus = "PUBLICACION_PENDIENTE";
+    } else if (downstream.radioValidationCount > 0) {
+      projectStatus = this.cpeProjectRadioValidationSummary(projectCode).allApproved
+        ? "RADIOS_APROBADAS"
+        : "RADIOS_EN_VALIDACION";
+    }
     const updatedAt = validation.validatedAt || new Date().toISOString();
     const result = this.db.prepare(`
       UPDATE cpe_projects SET
@@ -918,13 +965,13 @@ class CpeDatabase {
       WHERE code=?
     `).run(
       updatedAt,
-      validation.projectStatus,
+      projectStatus,
       validation.fileName || "",
       validation.filePath || "",
       validation.fileSha256 || "",
       updatedAt,
       JSON.stringify(validation.result || {}),
-      String(code || ""),
+      projectCode,
     );
     if (!result.changes) throw new Error(`No existe el proyecto ${code}`);
     return this.getCpeProject(code);
@@ -1042,6 +1089,9 @@ class CpeDatabase {
   recordCpeProjectRadioValidation(code, validation) {
     const projectCode = String(code || "");
     if (!this.getCpeProject(projectCode)) throw new Error(`No existe el proyecto ${projectCode}`);
+    if (this.getCpeProjectPublication(projectCode)) {
+      throw new Error("No se pueden modificar las validaciones después de iniciar la publicación del proyecto");
+    }
     const result = this.db.prepare(`
       INSERT INTO cpe_project_radio_validations (
         projectCode, expectedIssi, actualIssi, actualSerial, actualTei,

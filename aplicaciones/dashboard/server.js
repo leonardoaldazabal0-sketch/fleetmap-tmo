@@ -2007,6 +2007,18 @@ function validateCpeProjectModel(payload = {}) {
     throw new Error("El archivo seleccionado no parece un CPE Motorola válido");
   }
   if (buffer.length > 15 * 1024 * 1024) throw new Error("El CPE maestro supera el límite de 15 MB");
+  const fileSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
+  if (project.modelFileSha256 && project.modelFileSha256 === fileSha256 && project.modelValidation) {
+    return {
+      result: project.modelValidation,
+      project,
+      duplicate: true,
+    };
+  }
+  const downstream = database.getCpeProjectDownstreamState(projectCode);
+  if (downstream.hasActivity) {
+    throw new Error("No se puede reemplazar el CPE maestro después de validar radios o iniciar la publicación");
+  }
 
   const safeFileName = sourceFileName.replace(/[^A-Za-z0-9._\-\[\]]+/g, "_").slice(-180);
   const temporaryRoot = path.resolve(runtimePaths.dir("temporales"));
@@ -2044,7 +2056,6 @@ function validateCpeProjectModel(payload = {}) {
       emergencyGssi: Number(model.emergencyGssi || 0),
     };
     result.model = modelSummary;
-    const fileSha256 = crypto.createHash("sha256").update(buffer).digest("hex");
     const projectStatus = approved ? "MODELO_MAESTRO_APROBADO" : "MODELO_MAESTRO_NO_APROBADO";
     const updatedProject = database.updateCpeProjectModelValidation(projectCode, {
       projectStatus,
@@ -2115,6 +2126,9 @@ function validateCpeProjectRadio(payload = {}) {
       project: database.getCpeProject(projectCode),
       duplicate: true,
     };
+  }
+  if (database.getCpeProjectPublication(projectCode)) {
+    throw new Error("Este proyecto ya inició su publicación; no se pueden agregar ni sustituir radios validadas");
   }
 
   const safeFileName = sourceFileName.replace(/[^A-Za-z0-9._\-\[\]]+/g, "_").slice(-180);

@@ -284,6 +284,39 @@ test("registra y lista solicitudes del Proyecto CPE en SQLite", () => {
     assert.equal(approved.summary.pending, 0);
     assert.equal(approved.summary.validations.length, 1);
     assert.equal(approved.project.status, "RADIOS_APROBADAS");
+
+    db.queueCpeProjectPublication(project.code);
+    db.completeCpeProjectPublication(project.code, { nas: { status: "PUBLICADO" } });
+    assert.equal(db.getCpeProject(project.code).status, "PUBLICADO");
+
+    const repeatedModel = db.updateCpeProjectModelValidation(project.code, {
+      projectStatus: "MODELO_APROBADO",
+      fileName: "modelo.cpe",
+      filePath: path.join(tempRoot, "modelo.cpe"),
+      fileSha256: "model123",
+      result: { status: "APROBADO", failedCount: 0 },
+    });
+    assert.equal(repeatedModel.status, "PUBLICADO");
+    assert.throws(() => db.updateCpeProjectModelValidation(project.code, {
+      projectStatus: "MODELO_APROBADO",
+      fileName: "modelo-nuevo.cpe",
+      filePath: path.join(tempRoot, "modelo-nuevo.cpe"),
+      fileSha256: "model456",
+      result: { status: "APROBADO", failedCount: 0 },
+    }), /No se puede reemplazar el CPE maestro/);
+    assert.throws(() => db.recordCpeProjectRadioValidation(project.code, {
+      expectedIssi: "44310",
+      actualIssi: "44310",
+      fileName: "radio-nueva.cpe",
+      fileSha256: "radio-nueva",
+      programmer: "Programador Prueba",
+      status: "APROBADO",
+      result: { status: "APROBADO", checks: [] },
+    }), /después de iniciar la publicación/);
+
+    db.db.prepare("UPDATE cpe_projects SET status='MODELO_APROBADO' WHERE code=?").run(project.code);
+    assert.equal(db.reconcilePublishedCpeProjectStatuses(), 1);
+    assert.equal(db.getCpeProject(project.code).status, "PUBLICADO");
   } finally {
     db.close();
     fs.rmSync(tempRoot, { recursive: true, force: true });
