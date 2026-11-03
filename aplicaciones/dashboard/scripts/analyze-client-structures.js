@@ -4,7 +4,7 @@ const path = require("path");
 
 const projectRoot = path.join(__dirname, "..");
 const root = process.env.CPE_CLIENTS_2026_ROOT
-  || "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2026";
+  || "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2026";
 const matchesPath = runtimePaths.dataFile("client-folder-matches-2026.json");
 const outputJson = runtimePaths.dataFile("client-structure-analysis-2026.json");
 const outputCsv = runtimePaths.docFile("client-structure-analysis-2026.csv");

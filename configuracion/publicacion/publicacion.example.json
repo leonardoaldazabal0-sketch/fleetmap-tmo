@@ -2,7 +2,7 @@
   "version": 1,
   "nas": {
     "enabled": true,
-    "root": "\\\\192.168.7.250\\tic\\002 Programacion"
+    "root": "\\\\SERVIDOR\\recurso\\002 Programacion"
   },
   "googleDrive": {
     "enabled": true,

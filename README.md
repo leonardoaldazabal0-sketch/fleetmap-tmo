@@ -66,23 +66,3 @@ No copiar o mover a mano una base SQLite abierta ignorando sus archivos WAL/SHM.
 
 Las rutas mencionadas en auditorias antiguas son evidencia historica y no se reescribieron.
 El Git original y los cambios pendientes se conservaron; no se hicieron commits ni pushes.
-
-## Cambio de NAS a 192.168.7.250
-
-La raiz predeterminada del dashboard y del puente es ahora
-`\\192.168.7.250\tic\002 Programacion`. Se conservan las subcarpetas de cada envio.
-
-Para aplicar el cambio en una instalacion existente:
-
-- Actualizar el codigo desplegado del dashboard y, si se utiliza, del puente.
-- En `configuracion/publicacion/publicacion.json`, cambiar solamente `nas.root`
-  a `\\\\192.168.7.250\\tic\\002 Programacion` (valor escapado para JSON).
-  Conservar la configuracion de Google Drive: el flujo publica primero en Drive
-  y despues en el NAS.
-- Si la tarea o el entorno define `CPE_CENTRAL_ROOT`, actualizar su valor a la
-  nueva ruta UNC. Revisar tambien argumentos `-NasRoot` o `-DestinationRoot`
-  configurados en tareas del puente, porque prevalecen sobre los valores del codigo.
-- Reiniciar la tarea `CPE Dashboard` y los procesos del puente que correspondan.
-
-Este cambio de codigo no migra archivos ni reescribe rutas historicas guardadas
-en SQLite. Las configuraciones reales de la VM no se versionan en GitHub.

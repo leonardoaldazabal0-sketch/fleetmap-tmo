@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$SubmissionId,
 
-    [string]$NasRoot = '\\192.168.7.250\tic\002 Programacion',
+    [string]$NasRoot = '\\192.168.7.252\tic\002 Programacion',
     [string]$RclonePath = 'C:\ProgramacionBackup\bin\rclone.exe',
     [string]$RcloneConfig = 'C:\ProgramacionBackup\config\rclone.conf',
     [string]$SqlitePath = 'C:\ProgramacionBackup\bin\sqlite3.exe',

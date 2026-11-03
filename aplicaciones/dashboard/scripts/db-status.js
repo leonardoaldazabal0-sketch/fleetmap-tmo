@@ -6,7 +6,7 @@ const databasePath = process.env.CPE_DB_FILE
   ? path.resolve(process.env.CPE_DB_FILE)
   : runtimePaths.dataFile("cpe-dashboard.sqlite");
 const centralRoot = path.win32.resolve(
-  process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.250\\tic\\002 Programacion",
+  process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.252\\tic\\002 Programacion",
 );
 const db = new Database(databasePath, { readonly: true, fileMustExist: true });
 const count = (sql) => db.prepare(sql).get().value;

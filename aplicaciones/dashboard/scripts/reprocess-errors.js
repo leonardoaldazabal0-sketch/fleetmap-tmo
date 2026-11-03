@@ -12,7 +12,7 @@ const {
 } = app;
 
 const BATCH_SIZE = 200;
-const RUN_ROOT = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.250\\tic\\002 Programacion";
+const RUN_ROOT = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.252\\tic\\002 Programacion";
 const codeplugArgument = process.argv.find((value) => value.startsWith("--codeplug="));
 const forceCodeplugArgument = process.argv.find((value) => value.startsWith("--force-codeplug="));
 const fileSizeArgument = process.argv.find((value) => value.startsWith("--file-size="));

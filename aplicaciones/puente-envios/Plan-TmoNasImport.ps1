@@ -3,7 +3,7 @@ param(
     [Parameter(Mandatory = $true)]
     [string]$SubmissionId,
 
-    [string]$NasRoot = '\\192.168.7.250\tic\002 Programacion',
+    [string]$NasRoot = '\\192.168.7.252\tic\002 Programacion',
 
     [string]$DatabasePath = 'C:\ProgramacionBackup\operacion\data\ingestion.sqlite',
 

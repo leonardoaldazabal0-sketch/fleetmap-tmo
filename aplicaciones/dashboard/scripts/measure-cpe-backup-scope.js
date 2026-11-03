@@ -4,7 +4,7 @@ const path = require("path");
 const { isBackupCodeplugFile } = require("../lib/cpe-file-filter");
 
 const projectRoot = path.join(__dirname, "..");
-const root = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.250\\tic\\002 Programacion";
+const root = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.252\\tic\\002 Programacion";
 const outputPath = runtimePaths.dataFile("cpe-backup-scope-measurement.json");
 
 function measureFolder(folderPath) {

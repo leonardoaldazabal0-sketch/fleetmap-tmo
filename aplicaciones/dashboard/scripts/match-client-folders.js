@@ -5,7 +5,7 @@ const path = require("path");
 const projectRoot = path.join(__dirname, "..");
 const catalogPath = runtimePaths.dataFile("client-catalog-base.json");
 const nasRoot = process.env.CPE_CLIENTS_2026_ROOT
-  || "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2026";
+  || "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2026";
 const categories = ["ENTIDADES PUBLICAS", "PRIVADAS", "PRIVADAS CON CONTRATISTAS"];
 const outputJson = runtimePaths.dataFile("client-folder-matches-2026.json");
 const outputCsv = runtimePaths.docFile("client-folder-matches-2026.csv");
