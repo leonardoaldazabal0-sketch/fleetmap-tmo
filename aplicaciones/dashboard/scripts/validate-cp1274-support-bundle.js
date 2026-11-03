@@ -10,21 +10,21 @@ const app = require(path.join(root, "server"));
 const variants = [
   {
     cpsSize: 4739776,
-    file: "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2024\\AGUAYTIA\\20241003_LA\\DESPUES\\SN[123TXX0082]_TEI[00016C130476600]_ISSI[34408]_CP[1274]_SW[R36.000.9645]_USB110.cpe",
+    file: "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2024\\AGUAYTIA\\20241003_LA\\DESPUES\\SN[123TXX0082]_TEI[00016C130476600]_ISSI[34408]_CP[1274]_SW[R36.000.9645]_USB110.cpe",
     mainOffset: 971328,
     expectedCount: 4,
     expected: [["PG_OPER", 8771, 2], ["SEG.F", 8772, 4], ["PF_OPER", 8773, 1], ["LIBRE", 8774, 3]],
   },
   {
     cpsSize: 2849984,
-    file: "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2024\\APM\\20240514_LA\\DESPUES\\SN[938TPJ0043]_TEI[000148230436670]_ISSI[81679]_CP[1274]_SW[R27.000.9645]_USB10_1.cpe",
+    file: "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2024\\APM\\20240514_LA\\DESPUES\\SN[938TPJ0043]_TEI[000148230436670]_ISSI[81679]_CP[1274]_SW[R27.000.9645]_USB10_1.cpe",
     mainOffset: 816200,
     expectedCount: 60,
     expected: [["Canal Base", 8173, 58], ["Safety", 8169, 7], ["TECH EMER", 9039, 9], ["GENERALCARGO", 9127, 3]],
   },
   {
     cpsSize: 3021888,
-    file: "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2024\\ATU\\20240229_GO\\despues\\SN[767TXT0633]_TEI[00016C230317900]_ISSI[78023]_CP[1274]_SW[R55.000.9645]_USB5.cpe",
+    file: "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2024\\ATU\\20240229_GO\\despues\\SN[767TXT0633]_TEI[00016C230317900]_ISSI[78023]_CP[1274]_SW[R55.000.9645]_USB5.cpe",
     mainOffset: 816720,
     expectedCount: 17,
     expected: [["SEGURIDAD", 8441, 23], ["MANTENIMIENT", 8442, 15], ["GTU", 8443, 13], ["SEG METROPOL", 8444, 21]],

@@ -4,7 +4,7 @@ const Database = require("better-sqlite3");
 
 const projectRoot = path.join(__dirname, "..");
 const databasePath = process.env.CPE_DB_FILE || runtimePaths.dataFile("cpe-dashboard.sqlite");
-const centralRoot = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.252\\tic\\002 Programacion";
+const centralRoot = process.env.CPE_CENTRAL_ROOT || "\\\\192.168.7.250\\tic\\002 Programacion";
 const prefix = `${path.win32.resolve(centralRoot)}\\`;
 
 const database = new Database(databasePath, { readonly: true, fileMustExist: true });

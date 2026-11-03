@@ -103,7 +103,7 @@ parts.push(table(
     ["Versión", "1.0"],
     ["Fecha", "31 de julio de 2026"],
     ["Estado", "Propuesta para piloto controlado"],
-    ["Ruta central", "\\\\192.168.7.252\\tic\\002 Programacion"],
+    ["Ruta central", "\\\\192.168.7.250\\tic\\002 Programacion"],
     ["Aplicación", "FleetMap TMO / cpe-dashboard"],
   ],
   [2500, 6500],
@@ -267,7 +267,7 @@ parts.push(numbered("Confirmar que el importador no tenga permiso de borrado mas
 parts.push(paragraph("Criterio de aceptación: la VM puente puede crear y verificar un archivo de prueba sin modificar otros archivos.", { style: "Callout", shading: "E3F3F0" }));
 
 parts.push(paragraph("Paso 8. Integrar FleetMap TMO", { style: "Heading2" }));
-parts.push(numbered("Mantener fija la ruta \\\\192.168.7.252\\tic\\002 Programacion.", 1));
+parts.push(numbered("Mantener fija la ruta \\\\192.168.7.250\\tic\\002 Programacion.", 1));
 parts.push(numbered("Agregar un aviso interno protegido desde la VM puente hacia FleetMap.", 2));
 parts.push(numbered("Ejecutar el escaneo incremental después de cada lote, no por cada archivo.", 3));
 parts.push(numbered("Evitar escaneos simultáneos mediante un bloqueo de ejecución.", 4));

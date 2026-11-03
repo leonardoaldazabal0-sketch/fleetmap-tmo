@@ -47,7 +47,7 @@ const PROJECT_TEMPLATE_PYTHON_ARGS = path.basename(PROJECT_TEMPLATE_PYTHON).toLo
 const PARSER_VERSION = "24";
 const BATCH_SIZE = 200;
 const WEB_TECHNICAL_ROW_LIMIT = 500;
-const CENTRAL_ROOT = process.env.CPE_CENTRAL_ROOT || String.raw`\\192.168.7.252\tic\002 Programacion`;
+const CENTRAL_ROOT = process.env.CPE_CENTRAL_ROOT || String.raw`\\192.168.7.250\tic\002 Programacion`;
 const NODE_MODE = String(process.env.CPE_NODE_MODE || "central").trim().toLowerCase() === "field" ? "field" : "central";
 const database = new CpeDatabase(DATABASE_FILE, PARSER_VERSION);
 const projectPublisher = new ProjectCpePublisher({

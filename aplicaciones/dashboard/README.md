@@ -124,7 +124,7 @@ Al iniciar el servidor queda programado un escaneo diario a las `00:00`, usando 
 hora local de la VM, sobre esta ruta central predeterminada:
 
 ```text
-\\192.168.7.252\tic\002 Programacion
+\\192.168.7.250\tic\002 Programacion
 ```
 
 El trabajo se ejecuta en un proceso separado para mantener disponible la interfaz

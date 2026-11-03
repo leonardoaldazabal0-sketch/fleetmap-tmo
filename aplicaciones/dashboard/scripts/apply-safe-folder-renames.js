@@ -9,7 +9,7 @@ const reportPath = runtimePaths.dataFile("safe-folder-rename-proposals-2026.json
 const databasePath = process.env.CPE_DB_FILE || runtimePaths.dataFile("cpe-dashboard.sqlite");
 const execute = process.argv.includes("--execute");
 const expectedRoot = process.env.CPE_CLIENTS_2026_ROOT
-  || "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2026";
+  || "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2026";
 
 function stamp() {
   return new Date().toISOString().replace(/[:.]/g, "-");

@@ -6,7 +6,7 @@ const Database = require("better-sqlite3");
 const projectRoot = path.join(__dirname, "..");
 const databasePath = process.env.CPE_DB_FILE || runtimePaths.dataFile("cpe-dashboard.sqlite");
 const root = process.env.CPE_CLIENTS_2026_ROOT
-  || "\\\\192.168.7.252\\tic\\002 Programacion\\Plantillas x Clientes 2026";
+  || "\\\\192.168.7.250\\tic\\002 Programacion\\Plantillas x Clientes 2026";
 const outputJson = runtimePaths.dataFile("safe-folder-rename-proposals-2026.json");
 const outputCsv = runtimePaths.docFile("safe-folder-rename-proposals-2026.csv");
 
